@@ -10,6 +10,9 @@ class TrainImageHandler(object):
         self.save_img_dir = "/Users/wangyu/Desktop/利兹上课资料/Kaggle比赛/data/train_image.csv"
         data_exist_bool = os.path.exists(self.save_img_dir)
 
+
+        #testsetse
+
         if not data_exist_bool:
             self.get_dict_imgID_image()
             save_dict_as_csv(self.save_img_dir, self.dict_imgID_image)
