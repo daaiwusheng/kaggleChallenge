@@ -6,7 +6,8 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 import cv2
 
-from models.convmixer import *
+from models.utils_gray import *
+from models.medtnet import *
 from models.dataset import *
 from metrics.metrics import *
 
@@ -77,12 +78,20 @@ python train.py
 ##########################################################################
 
 args = parser.parse_args()
+gray_ = "yes"
 aug = args.aug
 args.batch_size = 32
 direc = "/databig/kaggle_result/"
 modelname = "convmixer"
 imgsize = 64
 
+
+if gray_ == "yes":
+    import JointTransform2D, ImageToImage2D, Image2D
+    imgchant = 1
+else:
+    from utils import JointTransform2D, ImageToImage2D, Image2D
+    imgchant = 3
 
 if args.crop is not None:
     crop = (args.crop, args.crop)
@@ -91,8 +100,7 @@ else:
 
 
 
-
-model = convmixer_1024_20()
+model = logo(img_size = imgsize, imgchan = imgchant)
 
 if torch.cuda.device_count() > 1:
     print("Let's use", torch.cuda.device_count(), "GPUs!")
