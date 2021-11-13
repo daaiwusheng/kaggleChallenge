@@ -15,12 +15,14 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Read annotation
-    df_all = pd.read_csv(TRAIN_CSV)
+    # df_all = pd.read_csv(TRAIN_CSV)
 
-    train_dataset = CellDataset(TRAIN_PATH, df_all, patch_size=PATCH_SIZE, split='train')
+    # train_dataset = CellDataset(TRAIN_PATH, df_all, patch_size=PATCH_SIZE, split='train')
+    train_dataset = KaggleData(is_train=True)
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
 
-    val_dataset = CellDataset(TRAIN_PATH, df_all, patch_size=PATCH_SIZE, split='val')
+    # val_dataset = CellDataset(TRAIN_PATH, df_all, patch_size=PATCH_SIZE, split='val')
+    val_dataset = KaggleData(is_train=False)
     val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
 
     parser = argparse.ArgumentParser(description='Convmixer')
@@ -69,7 +71,7 @@ def main():
     args = parser.parse_args()
     gray_ = "yes"
     aug = args.aug
-    direc = "F:/LeedsDocs/Kaggle/kaggle_result/"
+    direc = RESULT_DIR
 
     if gray_ == "yes":
         from models.utils_gray import JointTransform2D, ImageToImage2D, Image2D

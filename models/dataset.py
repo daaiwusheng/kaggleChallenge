@@ -10,6 +10,7 @@ from torchvision import transforms
 from utility.rle_tool import *
 from dataprocess.kaggle_data_provider import *
 from torchvision import transforms as T
+from typing import Callable
 ## 输出的shape  img和masks:(1,520,704)  c,h,w
 
 
