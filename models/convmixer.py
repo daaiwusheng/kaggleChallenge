@@ -54,7 +54,6 @@ class ConvMixerLayer(Module):
         x = self.point_wise_conv(x)
         x = self.act2(x)
         x = self.norm2(x)
-
         #
         return x
 
@@ -105,20 +104,35 @@ class ClassificationHead(Module):
     to predict the log-probabilities of the image classes.
     """
 
-    def __init__(self, d_model: int, n_classes: int):
+    def __init__(self, d_model: int):
         """
         * `d_model` is the number of channels in patch embeddings, $h$
         * `n_classes` is the number of classes in the classification task
         """
         super().__init__()
         # Average Pool
-        self.pool = nn.AdaptiveAvgPool2d((1, 1))
+        # self.pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.act = nn.GELU()
+        self.convtrans = nn.ConvTranspose2d(d_model, 1, kernel_size=1)
+        self.batchnorm = nn.BatchNorm2d(1)
+        self.upsample = nn.UpsamplingBilinear2d(scale_factor=2)
+
+        # Linear layer
+        # self.linear = nn.Linear(d_model, n_classes)
+        self.softmax = nn.Softmax2d()
 
     def forward(self, x: torch.Tensor):
         # Average pooling
-        x = self.pool(x)
+        # x = self.pool(x)
+        x = self.act(x)
+        x = self.convtrans(x)
+        x = self.batchnorm(x)
+        x = self.upsample(x)
         # Get the embedding, `x` will have shape `[batch_size, d_model, 1, 1]`
-        x = x[:, :, 0, 0]
+        # x = x[:, :, 0, 0]
+        # Linear layer
+        # x = self.linear(x)
+        x = self.softmax(x)
 
         #
         return x
@@ -129,7 +143,6 @@ class ConvMixer(Module):
     ## ConvMixer
     This combines the patch embeddings block, a number of ConvMixer layers and a classification head.
     """
-    expansion = 2
     def __init__(self, conv_mixer_layer: ConvMixerLayer, n_layers: int,
                  patch_emb: PatchEmbeddings,
                  classification: ClassificationHead):

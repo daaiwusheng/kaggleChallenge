@@ -1,5 +1,5 @@
 
-import pandas as pd
+
 
 import argparse
 from torch.autograd import Variable
@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 import cv2
 
 from models.utils_gray import *
-from models.medtnet import *
+from models.mixermedtnet import *
 from models.dataset import *
 from metrics.metrics import *
 
@@ -64,7 +64,7 @@ parser.add_argument('--gray', default='no', type=str)
 
 ##########################################################################
 '''
-python train.py 
+python trainmedt.py 
 --train_dataset "enter train directory" 
 --val_dataset "enter validation directory" 
 --direc 'path for results to be saved' 
@@ -81,8 +81,8 @@ args = parser.parse_args()
 gray_ = "yes"
 aug = args.aug
 args.batch_size = 32
-direc = "/databig/kaggle_result/"
-modelname = "convmixer"
+direc = "/nobackup/ml20t2w/Kaggle/kaggle_result/"
+modelname = "gatedaxialunet"
 imgsize = 64
 
 

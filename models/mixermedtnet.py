@@ -7,36 +7,32 @@ def conv1x1(in_planes, out_planes, stride=1):
     """1x1 convolution"""
     return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
 
+    # Size of a patch, $p$
+    patch_size: int = 2
+    # Number of channels in patch embeddings, $h$
+    d_model: int = 256
+    # Number of [ConvMixer layers](#ConvMixerLayer) or depth, $d$
+    n_layers: int = 1
+    # Kernel size of the depth-wise convolution, $k$
+    kernel_size: int = 7
+    # Number of classes in the task
+    n_classes: int = 2
 
 class medt_net(nn.Module):
 
     def __init__(self, block, block_2, layers, num_classes=2, zero_init_residual=True,
                  groups=8, width_per_group=64, replace_stride_with_dilation=None,
                  norm_layer=None, s=0.125, img_size = 128,imgchan = 3):
-        super(medt_net, self).__init__()
-        if norm_layer is None:
-            norm_layer = nn.BatchNorm2d
-        self._norm_layer = norm_layer
+        super().__init__()
 
-        self.inplanes = int(64 * s)
-        self.dilation = 1
-        if replace_stride_with_dilation is None:
-            replace_stride_with_dilation = [False, False, False]
-        if len(replace_stride_with_dilation) != 3:
-            raise ValueError("replace_stride_with_dilation should be None "
-                             "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
-        self.groups = groups
-        self.base_width = width_per_group
-        self.conv1 = nn.Conv2d(imgchan, self.inplanes, kernel_size=7, stride=2, padding=3,
-                               bias=False)
-        self.conv2 = nn.Conv2d(self.inplanes, 128, kernel_size=3, stride=1, padding=1, bias=False)
-        self.conv3 = nn.Conv2d(128, self.inplanes, kernel_size=3, stride=1, padding=1, bias=False)
-        self.bn1 = norm_layer(self.inplanes)
-        self.bn2 = norm_layer(128)
-        self.bn3 = norm_layer(self.inplanes)
-        # self.conv1 = nn.Conv2d(1, self.inplanes, kernel_size=3, stride=1, padding=1, bias=False)
-        self.bn1 = norm_layer(self.inplanes)
-        self.relu = nn.ReLU(inplace=True)
+        # We create a convolution layer with a kernel size and and stride length equal to patch size.
+        # This is equivalent to splitting the image into patches and doing a linear
+        # transformation on each patch.
+        self.conv = nn.Conv2d(in_channels, d_model, kernel_size=patch_size, stride=patch_size)
+        # Activation function
+        self.act = nn.GELU()
+        # Batch normalization
+        self.norm = nn.BatchNorm2d(d_model)
         # self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, int(128 * s), layers[0], kernel_size= (img_size//2))
         self.layer2 = self._make_layer(block, int(256 * s), layers[1], stride=2, kernel_size=(img_size//2),
@@ -46,28 +42,17 @@ class medt_net(nn.Module):
         # self.layer4 = self._make_layer(block, int(1024 * s), layers[3], stride=2, kernel_size=(img_size//8),
         #                                dilate=replace_stride_with_dilation[2])
 
-        # Decoder
-        # self.decoder1 = nn.Conv2d(int(1024 *2*s)      ,        int(1024*2*s), kernel_size=3, stride=2, padding=1)
-        # self.decoder2 = nn.Conv2d(int(1024  *2*s)     , int(1024*s), kernel_size=3, stride=1, padding=1)
-        # self.decoder3 = nn.Conv2d(int(1024*s),  int(512*s), kernel_size=3, stride=1, padding=1)
-        self.decoder4 = nn.Conv2d(int(512*s) ,  int(256*s), kernel_size=3, stride=1, padding=1)
-        self.decoder5 = nn.Conv2d(int(256*s) , int(128*s) , kernel_size=3, stride=1, padding=1)
-        self.adjust   = nn.Conv2d(int(128*s) , num_classes, kernel_size=1, stride=1, padding=0)
-        self.soft     = nn.Softmax(dim=1)
+        # Average Pool
+        self.pool = nn.AdaptiveAvgPool2d((1, 1))
+        # Linear layer
+        self.linear = nn.Linear(d_model, n_classes)
 
 
-        self.conv1_p = nn.Conv2d(imgchan, self.inplanes, kernel_size=7, stride=2, padding=3,
-                                 bias=False)
-        self.conv2_p = nn.Conv2d(self.inplanes,128, kernel_size=3, stride=1, padding=1,
-                                 bias=False)
-        self.conv3_p = nn.Conv2d(128, self.inplanes, kernel_size=3, stride=1, padding=1,
-                                 bias=False)
-        # self.conv1 = nn.Conv2d(1, self.inplanes, kernel_size=3, stride=1, padding=1, bias=False)
-        self.bn1_p = norm_layer(self.inplanes)
-        self.bn2_p = norm_layer(128)
-        self.bn3_p = norm_layer(self.inplanes)
-
-        self.relu_p = nn.ReLU(inplace=True)
+        self.conv_p = nn.Conv2d(in_channels, d_model, kernel_size=patch_size, stride=patch_size)
+        # Activation function
+        self.act_p = nn.GELU()
+        # Batch normalization
+        self.norm_p = nn.BatchNorm2d(d_model)
 
         img_size_p = img_size // 4
 
@@ -79,16 +64,10 @@ class medt_net(nn.Module):
         self.layer4_p = self._make_layer(block_2, int(1024 * s), layers[3], stride=2, kernel_size=(img_size_p//8),
                                          dilate=replace_stride_with_dilation[2])
 
-        # Decoder
-        self.decoder1_p = nn.Conv2d(int(1024 *2*s)      ,        int(1024*2*s), kernel_size=3, stride=2, padding=1)
-        self.decoder2_p = nn.Conv2d(int(1024  *2*s)     , int(1024*s), kernel_size=3, stride=1, padding=1)
-        self.decoder3_p = nn.Conv2d(int(1024*s),  int(512*s), kernel_size=3, stride=1, padding=1)
-        self.decoder4_p = nn.Conv2d(int(512*s) ,  int(256*s), kernel_size=3, stride=1, padding=1)
-        self.decoder5_p = nn.Conv2d(int(256*s) , int(128*s) , kernel_size=3, stride=1, padding=1)
-
-        self.decoderf = nn.Conv2d(int(128*s) , int(128*s) , kernel_size=3, stride=1, padding=1)
-        self.adjust_p   = nn.Conv2d(int(128*s) , num_classes, kernel_size=1, stride=1, padding=0)
-        self.soft_p     = nn.Softmax(dim=1)
+        # Average Pool
+        self.pool_p = nn.AdaptiveAvgPool2d((1, 1))
+        # Linear layer
+        self.linear_p = nn.Linear(d_model, n_classes)
 
 
     def _make_layer(self, block, planes, blocks, kernel_size=56, stride=1, dilate=False):
@@ -213,18 +192,7 @@ class medt_net(nn.Module):
         return self._forward_impl(x)
 
 def logo(pretrained=False, **kwargs):
-    # Size of a patch, $p$
-    patch_size: int = 2
-    # Number of channels in patch embeddings, $h$
-    d_model: int = 256
-    # Number of [ConvMixer layers](#ConvMixerLayer) or depth, $d$
-    n_layers: int = 1
-    # Kernel size of the depth-wise convolution, $k$
-    kernel_size: int = 7
-    # Number of classes in the task
-    n_classes: int = 2
-    convmixer_1024_20 = ConvMixer(ConvMixerLayer(d_model, kernel_size), n_layers,
-                                  PatchEmbeddings(d_model, patch_size, 3),
-                                  ClassificationHead(d_model, n_classes))
-    model = medt_net(convmixer_1024_20,convmixer_1024_20, [0, 1, 2, 3, 4, 5], s= 0.125, **kwargs)
+
+
+    model = medt_net(ConvMixerLayer,ConvMixerLayer, [1, 2, 4, 1], s= 0.125, **kwargs)
     return model
