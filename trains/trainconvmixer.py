@@ -10,12 +10,12 @@ from torch.utils.tensorboard import SummaryWriter
 
 from metrics.loss import *
 
+
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Read annotation
     df_all = pd.read_csv(TRAIN_CSV)
-
 
     train_dataset = CellDataset(TRAIN_PATH, df_all, patch_size=PATCH_SIZE, split='train')
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
@@ -71,7 +71,6 @@ def main():
     aug = args.aug
     direc = "F:/LeedsDocs/Kaggle/kaggle_result/"
 
-
     if gray_ == "yes":
         from models.utils_gray import JointTransform2D, ImageToImage2D, Image2D
         imgchant = 1
@@ -95,7 +94,6 @@ def main():
     # Number of classes in the task
     n_classes: int = 1
 
-
     model = ConvMixer(ConvMixerLayer(d_model, kernel_size), n_layers,
                       PatchEmbeddings(d_model, patch_size, 1),
                       ClassificationHead(d_model)).to(device)
@@ -103,9 +101,6 @@ def main():
     optimizer = torch.optim.AdamW(list(model.parameters()), lr=learning_rate,
                                   weight_decay=1e-5)
     criterion = LogNLLLoss()
-
-
-
 
     writer = SummaryWriter()
     for epoch in range(epochs):
@@ -201,6 +196,7 @@ def main():
             torch.save(model.state_dict(), fulldir + modelname + ".pth")
             torch.save(model.state_dict(), direc + "final_model.pth")
     writer.close()
+
 
 if __name__ == '__main__':
     main()

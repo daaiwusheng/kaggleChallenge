@@ -2,6 +2,7 @@ import sys
 import csv
 import cv2
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def outclude_hidden_files(files):
@@ -46,3 +47,14 @@ def load_dict_from_csv(filename):
         reader = csv.reader(csv_file)
         read_dict = dict(reader)
         return read_dict
+
+
+def normalization(data):
+    _range = np.max(data) - np.min(data)
+    return (data - np.min(data)) / _range
+
+
+def standardization(data):
+    mu = np.mean(data, axis=0)
+    sigma = np.std(data, axis=0)
+    return (data - mu) / sigma

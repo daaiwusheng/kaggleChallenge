@@ -8,16 +8,32 @@ import os
 from PIL import Image
 from torchvision import transforms
 from utility.rle_tool import *
+from dataprocess.kaggle_data_provider import *
+from torchvision import transforms as T
 ## 输出的shape  img和masks:(1,520,704)  c,h,w
 
+
+def correct_dims(*images):
+    corr_images = []
+    # print(images)
+    for img in images:
+        if len(img.shape) == 2:
+            corr_images.append(np.expand_dims(img, axis=2))
+        else:
+            corr_images.append(img)
+
+    if len(corr_images) == 1:
+        return corr_images[0]
+    else:
+        return corr_images
+
 class CellDataset(Dataset):
-    def __init__(self, image_dir, df, split='train', transforms=None, resize=False, patch_size = 16):
+    def __init__(self, image_dir, df, split='train', transforms=None, resize=False, patch_size=16):
         self.transforms = transforms
         self.image_dir = image_dir
         self.df = df
         self.patch_size = patch_size
         self.split = split
-
 
         self.should_resize = resize is not False
         if self.should_resize:
@@ -27,10 +43,9 @@ class CellDataset(Dataset):
             self.height = HEIGHT
             self.width = WIDTH
 
-
-        self.row_sum = self.height//self.patch_size
-        self.col_sum = self.width//self.patch_size
-        self.patch_num = self.row_sum*self.col_sum
+        self.row_sum = self.height // self.patch_size
+        self.col_sum = self.width // self.patch_size
+        self.patch_num = self.row_sum * self.col_sum
 
         self.image_info = collections.defaultdict(dict)
         ##这一步将相同ID的annotation组成在一起。比如原文件关于id=001的annotation有400条(行），操作过后temp_df中id=001的len(annotation)=400（一行）.
@@ -66,7 +81,7 @@ class CellDataset(Dataset):
         info = self.image_info[img_idx]
 
         n_objects = len(info['annotations'])
-        #********************************************************************************#
+        # ********************************************************************************#
         ##这一步得到的masks是将每一个a_mask放在不同的通道上，所有有多少a_mask就有多少通道
         ## boxes记录着每个a_mask的边框的顶点
         # masks = np.zeros((len(info['annotations']), self.height, self.width), dtype=np.uint8)
@@ -83,9 +98,9 @@ class CellDataset(Dataset):
         #     masks[i, :, :] = a_mask
 
         #     boxes.append(self.get_box(a_mask))
-        #********************************************************************************#
+        # ********************************************************************************#
 
-        #********************************************************************************#
+        # ********************************************************************************#
         ##  这个写法可以让所有a_mask加在同一个通道上，看起来更正常点
         masks = np.zeros((self.height, self.width), dtype=np.uint8)
 
@@ -99,13 +114,13 @@ class CellDataset(Dataset):
             a_mask = np.array(a_mask) > 0
             masks += a_mask
 
-        #********************************************************************************#
+        # ********************************************************************************#
 
-        masks = np.where(masks>0,1,0) #大于0的地方取0，否则取1. 因为前面的a_mask在一些像素上重叠了，所以需要改成1
+        masks = np.where(masks > 0, 1, 0)  # 大于0的地方取0，否则取1. 因为前面的a_mask在一些像素上重叠了，所以需要改成1
         img = np.array(img)
 
         # 计算patch位置
-        cur_row = patch_idx// self.col_sum
+        cur_row = patch_idx // self.col_sum
         cur_col = patch_idx % self.col_sum
 
         start_row = cur_row * self.patch_size
@@ -131,4 +146,40 @@ class CellDataset(Dataset):
         return image_clip, mask_clip
 
     def __len__(self):
-        return len(self.image_info) * (520//self.patch_size) * (704//self.patch_size)
+        return len(self.image_info) * (520 // self.patch_size) * (704 // self.patch_size)
+
+
+class KaggleData(Dataset):
+    def __init__(self, is_train=True, dataset_path: str = None, joint_transform: Callable = None, image_size=64):
+        self.data_provider = KaggleDataProvider(image_size=64)
+        self.images = []
+        self.masks = []
+        if is_train:
+            self.images = self.data_provider.train_images
+            self.masks = self.data_provider.train_labels
+        else:
+            self.images = self.data_provider.validate_images
+            self.masks = self.data_provider.validate_labels
+
+        if joint_transform:
+            self.joint_transform = joint_transform
+        else:
+            to_tensor = T.ToTensor()
+            self.joint_transform = lambda x, y: (to_tensor(x), to_tensor(y))
+
+    def __len__(self):
+        return len(self.masks)
+
+    def __getitem__(self, idx):
+        image = np.array(self.images[idx])
+        mask = np.array(self.masks[idx])
+        image, mask = correct_dims(image, mask)
+        # print(image.shape)
+        mask[mask < 127] = 0
+        mask[mask >= 127] = 1
+        image = torch.FloatTensor(image)
+        mask = torch.tensor(mask)
+        # if self.joint_transform:
+        #     image, mask = self.joint_transform(image, mask)
+
+        return image, mask
