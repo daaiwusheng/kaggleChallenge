@@ -5,15 +5,17 @@ import os
 
 class TrainImageHandler(object):
     def __init__(self):
+
+        # on Mac
         self.img_dir = "/Users/wangyu/Desktop/利兹上课资料/Kaggle比赛/data/train";
-        self.dict_imgID_image = {}
         self.save_img_dir = "/Users/wangyu/Desktop/利兹上课资料/Kaggle比赛/data/train_image.csv"
+        # on Linux
+        self.img_dir = "/home/steven/桌面/kaggle/data/train"
+        self.save_img_dir = "/home/steven/桌面/kaggle/data/train_image.csv"
+
+        self.dict_imgID_image = {}
+
         data_exist_bool = os.path.exists(self.save_img_dir)
-
-        #testwet
-        #teste
-
-        #testsetse
 
         if not data_exist_bool:
             self.get_dict_imgID_image()
@@ -32,6 +34,3 @@ class TrainImageHandler(object):
                     img = cv2.imread(image_full_path, 0)
                     image_id = image_name.split('.')[0]
                     self.dict_imgID_image[image_id] = img
-
-
-

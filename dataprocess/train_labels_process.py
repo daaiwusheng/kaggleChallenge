@@ -9,11 +9,16 @@ column_name_annotation = 'annotation'
 
 class TrainLabelsProcessor(object):
     def __init__(self):
+        #on Mac
         self.dir_train_csv = "/Users/wangyu/Desktop/利兹上课资料/Kaggle比赛/data/train.csv";
-        self.dict_imgID_mask = {}  # key is image id, v is mask
         self.save_mask_dir = "/Users/wangyu/Desktop/利兹上课资料/Kaggle比赛/data/train_mask.csv"
+        # on Linux
+        self.dir_train_csv = "/home/steven/桌面/kaggle/data/trainlabels/train.csv"
+        self.save_mask_dir = "/home/steven/桌面/kaggle/data/train_mask.csv"
 
-        data_exist_bool = os.path.exists(self.save_mask_dir)
+        self.dict_imgID_mask = {}  # key is image id, v is mask
+
+        data_exist_bool = False  # os.path.exists(self.save_mask_dir)
 
         if not data_exist_bool:
             self.get_dict_imgID_mask()
