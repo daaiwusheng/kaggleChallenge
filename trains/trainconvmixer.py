@@ -112,7 +112,8 @@ def main():
         for batch_idx, (X_batch, y_batch, *rest) in enumerate(train_loader):
             X_batch = Variable(X_batch.to(device='cuda'))
             y_batch = Variable(y_batch.to(device='cuda'))
-
+            # print(X_batch)
+            # print(y_batch)
             # ===================forward=====================
 
             output = model(X_batch)
@@ -156,17 +157,17 @@ def main():
 
             for batch_idx, (X_batch, y_batch, *rest) in enumerate(val_loader):
                 # print(batch_idx)
-                if isinstance(rest[0][0], str):
-                    image_filename = rest[0][0]
-                else:
-                    image_filename = '%s.png' % str(batch_idx + 1).zfill(3)
+                # if isinstance(rest[0][0], str):
+                #     image_filename = rest[0][0]
+                # else:
+                image_filename = '%s.png' % str(batch_idx + 1).zfill(3)
 
                 X_batch = Variable(X_batch.to(device='cuda'))
                 y_batch = Variable(y_batch.to(device='cuda'))
                 # start = timeit.default_timer()
                 y_out = model(X_batch)
-                iou_score = iou_numpy(y_out, y_batch)
-                writer.add_scalar("val_mean_dice", iou_score)
+                # iou_score = iou_pytorch(y_out, y_batch)
+                # writer.add_scalar("val_mean_dice", iou_score)
                 # stop = timeit.default_timer()
                 # print('Time: ', stop - start)
                 tmp2 = y_batch.detach().cpu().numpy()

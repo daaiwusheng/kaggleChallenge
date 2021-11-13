@@ -117,6 +117,8 @@ class ClassificationHead(Module):
         self.batchnorm = nn.BatchNorm2d(1)
         self.upsample = nn.UpsamplingBilinear2d(scale_factor=2)
 
+        self.adjust = nn.Conv2d(1, 2, kernel_size=1, stride=1, padding=0)
+
         # Linear layer
         # self.linear = nn.Linear(d_model, n_classes)
         self.softmax = nn.Softmax2d()
@@ -132,7 +134,8 @@ class ClassificationHead(Module):
         # x = x[:, :, 0, 0]
         # Linear layer
         # x = self.linear(x)
-        x = self.softmax(x)
+        # x = self.softmax(x)
+        x = self.adjust(x)
 
         #
         return x
