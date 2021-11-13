@@ -18,7 +18,7 @@ class LogNLLLoss(_WeightedLoss):
         y_target = torch.squeeze(y_target)
         y_target = torch.as_tensor(y_target, dtype=torch.long)
 
-        print(y_input.shape)
-        print(y_target.shape)
+        # print(y_input.shape)
+        # print(y_target.shape)
         return cross_entropy(y_input, y_target, weight=self.weight,
                              ignore_index=self.ignore_index)
