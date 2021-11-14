@@ -56,7 +56,7 @@ class KaggleDataProvider(object):
     def get_train_val_data(self):
         i = 0 # for test, then only use one image
         for img_id, label in self.dict_imageID_label.items():
-            if i == 1:
+            if i == 10:
                 break
             i += 1
             # first padding

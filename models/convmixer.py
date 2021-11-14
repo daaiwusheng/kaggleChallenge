@@ -113,15 +113,16 @@ class ClassificationHead(Module):
         # Average Pool
         # self.pool = nn.AdaptiveAvgPool2d((1, 1))
         self.act = nn.GELU()
-        self.convtrans = nn.ConvTranspose2d(d_model, 1, kernel_size=1)
-        self.batchnorm = nn.BatchNorm2d(1)
-        self.upsample = nn.UpsamplingBilinear2d(scale_factor=2)
-
-        self.adjust = nn.Conv2d(1, 2, kernel_size=1, stride=1, padding=0)
-
+        self.convtrans = nn.ConvTranspose2d(d_model, d_model, kernel_size=4, stride=2, padding=1)
+        self.batchnorm = nn.BatchNorm2d(d_model)
+        #这里尽量不要考虑上采用函数，因为这个线性插值的纯粹的数值计算是不能学习的，反卷积可以做到上采样
+        # self.upsample = nn.UpsamplingBilinear2d(scale_factor=2)
+        #1*1卷积这里，无论前面输出多好channel， 这里直接拿来作为输入就行了
+        self.adjust = nn.Conv2d(d_model, 2, kernel_size=1, stride=1, padding=0)
+        #由于目前用的交叉商函数自带softmax， 所以这里就不需要加入softmax了
         # Linear layer
         # self.linear = nn.Linear(d_model, n_classes)
-        self.softmax = nn.Softmax2d()
+        # self.softmax = nn.Softmax2d()
 
     def forward(self, x: torch.Tensor):
         # Average pooling
@@ -129,13 +130,17 @@ class ClassificationHead(Module):
         x = self.act(x)
         x = self.convtrans(x)
         x = self.batchnorm(x)
-        x = self.upsample(x)
+        # x = self.upsample(x)
         # Get the embedding, `x` will have shape `[batch_size, d_model, 1, 1]`
         # x = x[:, :, 0, 0]
         # Linear layer
         # x = self.linear(x)
         # x = self.softmax(x)
+        # print(x)
+        # print('*'*25)
         x = self.adjust(x)
+        # print(x.shape)
+        # print(x)
 
         #
         return x
