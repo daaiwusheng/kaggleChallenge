@@ -5,10 +5,7 @@ import os
 
 class TrainImageHandler(object):
     def __init__(self):
-        #on Mac
-        self.img_dir = "/Users/wangyu/Desktop/利兹上课资料/Kaggle比赛/data/train";
-        #on Linux
-        self.img_dir = "/home/steven/桌面/kaggle/data/train"
+        self.img_dir = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train/"
         self.dict_imgID_image = {}
         self.get_dict_imgID_image()
 

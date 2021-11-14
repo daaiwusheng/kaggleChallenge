@@ -11,11 +11,14 @@ column_name_annotation = 'annotation'
 class TrainLabelsProcessor(object):
     def __init__(self):
         #on Mac
-        self.dir_train_csv = "/Users/wangyu/Desktop/利兹上课资料/Kaggle比赛/data/train.csv"
-        self.save_mask_dir = "/Users/wangyu/Desktop/利兹上课资料/Kaggle比赛/data/train_mask.csv"
+        # self.dir_train_csv = "/Users/wangyu/Desktop/利兹上课资料/Kaggle比赛/data/train.csv"
+        # self.save_mask_dir = "/Users/wangyu/Desktop/利兹上课资料/Kaggle比赛/data/train_mask.csv"
         # on Linux
-        self.dir_train_csv = "/home/steven/桌面/kaggle/data/trainlabels/train.csv"
-        self.save_mask_dir = "/home/steven/桌面/kaggle/data/train_mask.csv"
+        # self.dir_train_csv = "/home/steven/桌面/kaggle/data/trainlabels/train.csv"
+        # self.save_mask_dir = "/home/steven/桌面/kaggle/data/train_mask.csv"
+        # on Windows
+        self.dir_train_csv = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train.csv"
+        self.save_mask_dir = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train_mask.csv"
         self.dict_imgID_rel = {}  # key is image id, v is rel code but store by lines
         self.dict_imgID_mask = {}  # key is image id, v is mask
 

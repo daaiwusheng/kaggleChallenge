@@ -18,12 +18,13 @@ def main():
     # df_all = pd.read_csv(TRAIN_CSV)
 
     # train_dataset = CellDataset(TRAIN_PATH, df_all, patch_size=PATCH_SIZE, split='train')
+    # 注：python有bug，pickle一次读进大于4G的数据时，在windows上运行会出现EOFError: Ran out of input的错误，解决方案为要么不读取大于4G的数据，要么workers改为0
     train_dataset = KaggleData(is_train=True)
-    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
+    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
 
     # val_dataset = CellDataset(TRAIN_PATH, df_all, patch_size=PATCH_SIZE, split='val')
-    val_dataset = KaggleData(is_train=False)
-    val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
+    val_dataset = KaggleData(is_train=True)
+    val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
 
     parser = argparse.ArgumentParser(description='Convmixer')
     parser.add_argument('-j', '--workers', default=1, type=int, metavar='N',
@@ -103,13 +104,22 @@ def main():
     optimizer = torch.optim.AdamW(list(model.parameters()), lr=learning_rate,
                                   weight_decay=1e-5)
     criterion = LogNLLLoss()
+    metric = IoUScore()
 
     writer = SummaryWriter()
+
+
+    epoch_loss_values = list()
+    iou_list = list()
     for epoch in range(epochs):
 
         epoch_running_loss = 0
+        print("-" * 10)
+        print(f"epoch {epoch + 1}/{400}")
 
+        step = 0
         for batch_idx, (X_batch, y_batch, *rest) in enumerate(train_loader):
+            step += 1
             X_batch = Variable(X_batch.to(device='cuda'))
             y_batch = Variable(y_batch.to(device='cuda'))
             # print(X_batch)
@@ -145,15 +155,20 @@ def main():
             loss.backward()
             optimizer.step()
             epoch_running_loss += loss.item()
-
+            epoch_len = len(train_dataset) // train_loader.batch_size
             # ===================log========================
-            print('epoch [{}/{}], loss:{:.4f}'
-                  .format(epoch, epochs, epoch_running_loss / (batch_idx + 1)))
+            print(f"{step}/{epoch_len}, train_loss: {loss.item():.4f}")
             writer.add_scalar("train_loss", loss.item())
+        epoch_running_loss /= step
+        epoch_loss_values.append(epoch_running_loss)
+        print(f"epoch {epoch + 1} average loss: {epoch_running_loss:.4f}")
+
         if epoch == 10:
             for param in model.parameters():
                 param.requires_grad = True
         if (epoch % save_freq) == 0:
+
+
 
             for batch_idx, (X_batch, y_batch, *rest) in enumerate(val_loader):
                 # print(batch_idx)
@@ -166,8 +181,8 @@ def main():
                 y_batch = Variable(y_batch.to(device='cuda'))
                 # start = timeit.default_timer()
                 y_out = model(X_batch)
-                # iou_score = iou_pytorch(y_out, y_batch)
-                # writer.add_scalar("val_mean_dice", iou_score)
+                iou_score = metric(y_out, y_batch)
+                iou_list.append(iou_score)
                 # stop = timeit.default_timer()
                 # print('Time: ', stop - start)
                 tmp2 = y_batch.detach().cpu().numpy()
@@ -195,6 +210,9 @@ def main():
                     os.makedirs(fulldir)
 
                 cv2.imwrite(fulldir + image_filename, yHaT[0, 1, :, :])
+            avg_iou = np.mean(iou_list)
+            print("current epoch: {} current mean iou: {:.4f}".format(epoch + 1, avg_iou))
+            writer.add_scalar("val_mean_iou", avg_iou, epoch + 1)
             fulldir = direc + "/{}/".format(epoch)
             torch.save(model.state_dict(), fulldir + modelname + ".pth")
             torch.save(model.state_dict(), direc + "final_model.pth")

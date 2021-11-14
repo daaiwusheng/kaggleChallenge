@@ -135,10 +135,11 @@ class ClassificationHead(Module):
         # x = x[:, :, 0, 0]
         # Linear layer
         # x = self.linear(x)
-        # x = self.softmax(x)
+
         # print(x)
         # print('*'*25)
         x = self.adjust(x)
+        # x = self.softmax(x)
         # print(x.shape)
         # print(x)
 
