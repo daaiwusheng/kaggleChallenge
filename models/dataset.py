@@ -176,8 +176,7 @@ class KaggleData(Dataset):
         mask = np.array(self.masks[idx])
         image, mask = correct_dims(image, mask)
         # print(image.shape)
-        mask[mask < 127] = 0
-        mask[mask >= 127] = 1
+        mask = np.where(mask > 0, 1, 0)  # 大于0的地方取0，否则取1. 因为前面的a_mask在一些像素上重叠了，所以需要改成1
         transform = transforms.Compose([
             transforms.ToTensor()
         ])
