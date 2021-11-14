@@ -10,8 +10,8 @@ split_factor = 0.6
 class KaggleDataProvider(object):
     def __init__(self, image_size=64):
         # on Linux
-        self.save_img_dir = "/home/steven/桌面/kaggle/data/clip_image.csv"
-        self.save_mask_dir = "/home/steven/桌面/kaggle/data/clip_mask_image.csv"
+        # self.save_img_dir = "/home/steven/桌面/kaggle/data/clip_image.csv"
+        # self.save_mask_dir = "/home/steven/桌面/kaggle/data/clip_mask_image.csv"
         self.images = []
         self.labels = []
         self.train_images = []
