@@ -2,7 +2,8 @@ import sys
 import csv
 import cv2
 import matplotlib.pyplot as plt
-
+import numpy as np
+import torch
 
 def outclude_hidden_files(files):
     return [f for f in files if not f[0] == '.']
@@ -33,7 +34,7 @@ def get_line_num():
 
 
 def save_dict_as_csv(filename, dict_need_save):
-    with open(filename, "w") as csv_file:
+    with open(filename, "w", encoding="utf-8") as csv_file:
         # writer = csv.DictWriter(csv_file)
         writer = csv.writer(csv_file)
         for key, value in dict_need_save.items():
@@ -42,7 +43,18 @@ def save_dict_as_csv(filename, dict_need_save):
 
 def load_dict_from_csv(filename):
     read_dict = {}
-    with open(filename, "r") as csv_file:
+    with open(filename, "r", encoding="utf-8") as csv_file:
         reader = csv.reader(csv_file)
         read_dict = dict(reader)
         return read_dict
+
+
+def normalization(data):
+    _range = np.max(data) - np.min(data)
+    return (data - np.min(data)) / _range
+
+
+def standardization(data):
+    mu = np.mean(data, axis=0)
+    sigma = np.std(data, axis=0)
+    return (data - mu) / sigma
