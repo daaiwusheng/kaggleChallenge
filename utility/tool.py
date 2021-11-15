@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
+csv.field_size_limit(sys.maxsize)
+
+
 def outclude_hidden_files(files):
     return [f for f in files if not f[0] == '.']
 
