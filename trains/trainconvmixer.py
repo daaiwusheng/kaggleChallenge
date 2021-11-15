@@ -87,7 +87,7 @@ def main():
         crop = None
 
     # Size of a patch, $p$
-    patch_size: int = 2
+    patch_size: int = 8
     # Number of channels in patch embeddings, $h$
     d_model: int = 256
     # Number of [ConvMixer layers](#ConvMixerLayer) or depth, $d$
@@ -103,7 +103,7 @@ def main():
 
     optimizer = torch.optim.AdamW(list(model.parameters()), lr=learning_rate,
                                   weight_decay=1e-5)
-    criterion = LogNLLLoss()
+    # criterion = LogNLLLoss()
     metric = IoUScore()
 
     writer = SummaryWriter()
@@ -147,7 +147,7 @@ def main():
             # y_batch = torch.FloatTensor(y_batch)
             output = output.float()
             y_batch = y_batch.float()
-            loss = criterion(output, y_batch).float()
+            loss = LogNLLLoss(output, y_batch).float()
             # loss = Variable(loss, requires_grad = True)
 
             # ===================backward====================

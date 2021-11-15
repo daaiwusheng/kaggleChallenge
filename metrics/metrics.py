@@ -10,8 +10,9 @@ class IoUScore(nn.Module):
 
     def forward(self, inputs, targets, smooth=1):
 
-        #comment out if your model contains a sigmoid or equivalent activation layer
-        inputs = F.softmax(inputs,dim=1)[:,1:]
+
+        # inputs = F.softmax(inputs, dim=1)[:, 1:]
+        inputs = inputs[:, 1:]
 
         #flatten label and prediction tensors
         inputs = inputs.reshape(-1)
