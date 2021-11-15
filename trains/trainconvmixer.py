@@ -11,12 +11,12 @@ from torch.utils.tensorboard import SummaryWriter
 from metrics.loss import *
 
 from utility.metriclogger import *
-
+from tqdm import tqdm
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    logger = get_logger('/path/to/exp/exp.log')
+    logger = get_logger('F:/LeedsDocs/Kaggle/exp.log')
     # Read annotation
     # df_all = pd.read_csv(TRAIN_CSV)
 
@@ -28,6 +28,13 @@ def main():
     # val_dataset = CellDataset(TRAIN_PATH, df_all, patch_size=PATCH_SIZE, split='val')
     val_dataset = KaggleData(is_train=True)
     val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
+
+    # df_all = pd.read_csv(TRAIN_CSV)
+    # train_dataset = CellDataset(TRAIN_PATH, df_all, patch_size=PATCH_SIZE, split='train')
+    # train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=2)
+    #
+    # val_dataset = CellDataset(TRAIN_PATH, df_all, patch_size=PATCH_SIZE, split='val')
+    # val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=2)
 
     parser = argparse.ArgumentParser(description='Convmixer')
     parser.add_argument('-j', '--workers', default=1, type=int, metavar='N',
@@ -68,7 +75,7 @@ def main():
     '''
     ##########################################################################
     epochs = 400
-    save_freq = 10
+    save_freq = 1
     learning_rate = 0.001
     modelname = "Convmixer"
 
@@ -111,7 +118,7 @@ def main():
 
     writer = SummaryWriter()
 
-
+    val_loss_values = list()
     epoch_loss_values = list()
     iou_list = list()
 
@@ -123,7 +130,7 @@ def main():
         print(f"epoch {epoch + 1}/{400}")
 
         step = 0
-        for batch_idx, (X_batch, y_batch, *rest) in enumerate(train_loader):
+        for batch_idx, (X_batch, y_batch) in tqdm(enumerate(train_loader), total =len(train_loader)):
             step += 1
             X_batch = Variable(X_batch.to(device='cuda'))
             y_batch = Variable(y_batch.to(device='cuda'))
@@ -133,25 +140,25 @@ def main():
 
             output = model(X_batch)
 
-            tmp2 = y_batch.detach().cpu().numpy()
-            tmp = output.detach().cpu().numpy()
-            tmp[tmp >= 0.5] = 1
-            tmp[tmp < 0.5] = 0
-            tmp2[tmp2 > 0] = 1
-            tmp2[tmp2 <= 0] = 0
-            tmp2 = tmp2.astype(int)
-            tmp = tmp.astype(int)
+            # tmp2 = y_batch.detach().cpu().numpy()
+            # tmp = output.detach().cpu().numpy()
+            # tmp[tmp >= 0.5] = 1
+            # tmp[tmp < 0.5] = 0
+            # tmp2[tmp2 > 0] = 1
+            # tmp2[tmp2 <= 0] = 0
+            # tmp2 = tmp2.astype(int)
+            # tmp = tmp.astype(int)
 
-            yHaT = tmp
-            yval = tmp2
+            # yHaT = tmp
+            # yval = tmp2
 
             # 报错，crossentropy需要float point而不是byte，故强转
             # output = output.detach().cpu().numpy()
             # y_batch = y_batch.detach().cpu().numpy()
             # output = torch.FloatTensor(output)
             # y_batch = torch.FloatTensor(y_batch)
-            output = output.float()
-            y_batch = y_batch.float()
+            # output = output.float()
+            # y_batch = y_batch.float()
             loss = LogNLLLoss(output, y_batch).float()
             # loss = Variable(loss, requires_grad = True)
 
@@ -162,11 +169,10 @@ def main():
             epoch_running_loss += loss.item()
             epoch_len = len(train_dataset) // train_loader.batch_size
             # ===================log========================
-            print(f"{step}/{epoch_len}, train_loss: {loss.item():.4f}")
             writer.add_scalar("train_loss", loss.item())
         epoch_running_loss /= step
         epoch_loss_values.append(epoch_running_loss)
-        print(f"epoch {epoch + 1} average loss: {epoch_running_loss:.4f}")
+        print(f"epoch {epoch + 1} average loss: {epoch_running_loss:.6f}")
 
         if epoch == 10:
             for param in model.parameters():
@@ -174,7 +180,7 @@ def main():
         if (epoch % save_freq) == 0:
             model.eval()
             with torch.no_grad():
-                for batch_idx, (X_batch, y_batch, *rest) in enumerate(val_loader):
+                for batch_idx, (X_batch, y_batch) in tqdm(enumerate(val_loader), total =len(val_loader)):
                     # print(batch_idx)
                     # if isinstance(rest[0][0], str):
                     #     image_filename = rest[0][0]
@@ -186,38 +192,43 @@ def main():
                     # start = timeit.default_timer()
                     y_out = model(X_batch)
                     iou_score = metric(y_out, y_batch)
+                    y_batch = y_batch.float()
+                    y_out = y_out.float()
+                    val_loss = LogNLLLoss(y_out, y_batch).float()
                     iou_list.append(iou_score)
+                    val_loss_values.append(val_loss.detach().cpu().numpy())
                     # stop = timeit.default_timer()
                     # print('Time: ', stop - start)
-                    tmp2 = y_batch.detach().cpu().numpy()
-                    tmp = y_out.detach().cpu().numpy()
-                    tmp[tmp >= 0.5] = 1
-                    tmp[tmp < 0.5] = 0
-                    tmp2[tmp2 > 0] = 1
-                    tmp2[tmp2 <= 0] = 0
-                    tmp2 = tmp2.astype(int)
-                    tmp = tmp.astype(int)
+                    # tmp2 = y_batch.detach().cpu().numpy()
+                    # tmp = y_out.detach().cpu().numpy()
+                    # tmp[tmp >= 0.5] = 1
+                    # tmp[tmp < 0.5] = 0
+                    # tmp2[tmp2 > 0] = 1
+                    # tmp2[tmp2 <= 0] = 0
+                    # tmp2 = tmp2.astype(int)
+                    # tmp = tmp.astype(int)
 
                     # print(np.unique(tmp2))
-                    yHaT = tmp
-                    yval = tmp2
+                    # yHaT = tmp
+                    # yval = tmp2
 
                     epsilon = 1e-20
 
-                    del X_batch, y_batch, tmp, tmp2, y_out
+                    del X_batch, y_batch, y_out
 
-                    yHaT[yHaT == 1] = 255
-                    yval[yval == 1] = 255
+                    # yHaT[yHaT == 1] = 255
+                    # yval[yval == 1] = 255
                     fulldir = direc + "/{}/".format(epoch)
                     # print(fulldir+image_filename)
                     if not os.path.isdir(fulldir):
                         os.makedirs(fulldir)
 
-                    cv2.imwrite(fulldir + image_filename, yHaT[0, 1, :, :])
+                    # cv2.imwrite(fulldir + image_filename, yHaT[0, 1, :, :])
                 avg_iou = np.mean(iou_list)
-                print("current epoch: {} current mean iou: {:.4f}".format(epoch + 1, avg_iou))
+                avg_val_loss = np.mean(val_loss_values)
+                print("current epoch: {} current mean val loss: {:.6f} current mean iou: {:.6f}".format(epoch + 1, avg_val_loss, avg_iou))
                 writer.add_scalar("val_mean_iou", avg_iou, epoch + 1)
-                logger.info('Epoch:[{}/{}]\t loss={:.5f}\t acc={:.3f}'.format(epoch, epochs, epoch_running_loss, avg_iou))
+                logger.info('Epoch:[{}/{}]\t loss={:.6f}\t avg_val_loss={:.6f}\t avg_iou={:.6f}'.format(epoch, epochs, epoch_running_loss, avg_val_loss, avg_iou))
                 fulldir = direc + "/{}/".format(epoch)
                 torch.save(model.state_dict(), fulldir + modelname + ".pth")
                 torch.save(model.state_dict(), direc + "final_model.pth")
@@ -225,6 +236,7 @@ def main():
 
     logger.info('finish training!')
     writer.close()
+
 
 
 if __name__ == '__main__':
