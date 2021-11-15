@@ -12,8 +12,7 @@ class IoUScore(nn.Module):
 
 
 
-        # inputs = F.softmax(inputs, dim=1)[:, 1:]
-        inputs = inputs[:, 1:]
+        inputs = F.softmax(inputs, dim=1)[:, 1:]
 
 
 
