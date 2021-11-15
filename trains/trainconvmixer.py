@@ -10,10 +10,13 @@ from torch.utils.tensorboard import SummaryWriter
 
 from metrics.loss import *
 
+from utility.metriclogger import *
+
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+    logger = get_logger('/path/to/exp/exp.log')
     # Read annotation
     # df_all = pd.read_csv(TRAIN_CSV)
 
@@ -111,6 +114,8 @@ def main():
 
     epoch_loss_values = list()
     iou_list = list()
+
+    logger.info('start training!')
     for epoch in range(epochs):
 
         epoch_running_loss = 0
@@ -212,11 +217,13 @@ def main():
                 avg_iou = np.mean(iou_list)
                 print("current epoch: {} current mean iou: {:.4f}".format(epoch + 1, avg_iou))
                 writer.add_scalar("val_mean_iou", avg_iou, epoch + 1)
+                logger.info('Epoch:[{}/{}]\t loss={:.5f}\t acc={:.3f}'.format(epoch, epochs, epoch_running_loss, avg_iou))
                 fulldir = direc + "/{}/".format(epoch)
                 torch.save(model.state_dict(), fulldir + modelname + ".pth")
                 torch.save(model.state_dict(), direc + "final_model.pth")
                 model.train()
 
+    logger.info('finish training!')
     writer.close()
 
 
