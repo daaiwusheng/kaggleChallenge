@@ -50,6 +50,7 @@ class TrainLabelsProcessor(object):
             if img_id in self.dict_imgID_rel:
                 rles = self.dict_imgID_rel[img_id]
                 rles = rles + ' ' + rle_code  # note we need a space here
+                self.dict_imgID_rel[img_id] = rles
             else:
                 self.dict_imgID_rel[img_id] = rle_code
         save_dict_as_csv(self.save_mask_dir, self.dict_imgID_rel)

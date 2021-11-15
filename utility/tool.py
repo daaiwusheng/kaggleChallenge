@@ -16,6 +16,8 @@ def outclude_hidden_dirs(dirs):
 def show_image(image, window_name='test'):
     if isinstance(image, torch.Tensor):
         image = image.numpy()
+
+    image[image == 1] = 255
     cv2.imshow(window_name, image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
