@@ -17,8 +17,10 @@ class TrainLabelsProcessor(object):
         # self.dir_train_csv = "/home/steven/桌面/kaggle/data/trainlabels/train.csv"
         # self.save_mask_dir = "/home/steven/桌面/kaggle/data/train_mask.csv"
         # on Windows
+
         self.dir_train_csv = TRAIN_CSV
         self.save_mask_dir = MASK_DIR
+
         self.dict_imgID_rel = {}  # key is image id, v is rel code but store by lines
         self.dict_imgID_mask = {}  # key is image id, v is mask
 

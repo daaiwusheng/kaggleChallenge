@@ -167,7 +167,6 @@ def main():
             for param in model.parameters():
                 param.requires_grad = True
         if (epoch % save_freq) == 0:
-
             model.eval()
             with torch.no_grad():
                 for batch_idx, (X_batch, y_batch, *rest) in enumerate(val_loader):
@@ -217,6 +216,7 @@ def main():
                 torch.save(model.state_dict(), fulldir + modelname + ".pth")
                 torch.save(model.state_dict(), direc + "final_model.pth")
                 model.train()
+
     writer.close()
 
 

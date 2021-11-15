@@ -6,7 +6,9 @@ from config.config import *
 
 class TrainImageHandler(object):
     def __init__(self):
+
         self.img_dir = TRAIN_PATH
+
         self.dict_imgID_image = {}
         self.get_dict_imgID_image()
 

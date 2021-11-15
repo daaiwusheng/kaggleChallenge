@@ -11,8 +11,11 @@ class IoUScore(nn.Module):
     def forward(self, inputs, targets, smooth=1):
 
 
+
         # inputs = F.softmax(inputs, dim=1)[:, 1:]
         inputs = inputs[:, 1:]
+
+
 
         #flatten label and prediction tensors
         inputs = inputs.reshape(-1)
@@ -25,6 +28,7 @@ class IoUScore(nn.Module):
         union = total - intersection
 
         IoU = (intersection + smooth)/(union + smooth)
+
 
         return IoU.cpu().numpy()
 
