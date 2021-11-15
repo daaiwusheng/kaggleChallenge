@@ -168,54 +168,55 @@ def main():
                 param.requires_grad = True
         if (epoch % save_freq) == 0:
 
+            model.eval()
+            with torch.no_grad():
+                for batch_idx, (X_batch, y_batch, *rest) in enumerate(val_loader):
+                    # print(batch_idx)
+                    # if isinstance(rest[0][0], str):
+                    #     image_filename = rest[0][0]
+                    # else:
+                    image_filename = '%s.png' % str(batch_idx + 1).zfill(3)
 
+                    X_batch = Variable(X_batch.to(device='cuda'))
+                    y_batch = Variable(y_batch.to(device='cuda'))
+                    # start = timeit.default_timer()
+                    y_out = model(X_batch)
+                    iou_score = metric(y_out, y_batch)
+                    iou_list.append(iou_score)
+                    # stop = timeit.default_timer()
+                    # print('Time: ', stop - start)
+                    tmp2 = y_batch.detach().cpu().numpy()
+                    tmp = y_out.detach().cpu().numpy()
+                    tmp[tmp >= 0.5] = 1
+                    tmp[tmp < 0.5] = 0
+                    tmp2[tmp2 > 0] = 1
+                    tmp2[tmp2 <= 0] = 0
+                    tmp2 = tmp2.astype(int)
+                    tmp = tmp.astype(int)
 
-            for batch_idx, (X_batch, y_batch, *rest) in enumerate(val_loader):
-                # print(batch_idx)
-                # if isinstance(rest[0][0], str):
-                #     image_filename = rest[0][0]
-                # else:
-                image_filename = '%s.png' % str(batch_idx + 1).zfill(3)
+                    # print(np.unique(tmp2))
+                    yHaT = tmp
+                    yval = tmp2
 
-                X_batch = Variable(X_batch.to(device='cuda'))
-                y_batch = Variable(y_batch.to(device='cuda'))
-                # start = timeit.default_timer()
-                y_out = model(X_batch)
-                iou_score = metric(y_out, y_batch)
-                iou_list.append(iou_score)
-                # stop = timeit.default_timer()
-                # print('Time: ', stop - start)
-                tmp2 = y_batch.detach().cpu().numpy()
-                tmp = y_out.detach().cpu().numpy()
-                tmp[tmp >= 0.5] = 1
-                tmp[tmp < 0.5] = 0
-                tmp2[tmp2 > 0] = 1
-                tmp2[tmp2 <= 0] = 0
-                tmp2 = tmp2.astype(int)
-                tmp = tmp.astype(int)
+                    epsilon = 1e-20
 
-                # print(np.unique(tmp2))
-                yHaT = tmp
-                yval = tmp2
+                    del X_batch, y_batch, tmp, tmp2, y_out
 
-                epsilon = 1e-20
+                    yHaT[yHaT == 1] = 255
+                    yval[yval == 1] = 255
+                    fulldir = direc + "/{}/".format(epoch)
+                    # print(fulldir+image_filename)
+                    if not os.path.isdir(fulldir):
+                        os.makedirs(fulldir)
 
-                del X_batch, y_batch, tmp, tmp2, y_out
-
-                yHaT[yHaT == 1] = 255
-                yval[yval == 1] = 255
+                    cv2.imwrite(fulldir + image_filename, yHaT[0, 1, :, :])
+                avg_iou = np.mean(iou_list)
+                print("current epoch: {} current mean iou: {:.4f}".format(epoch + 1, avg_iou))
+                writer.add_scalar("val_mean_iou", avg_iou, epoch + 1)
                 fulldir = direc + "/{}/".format(epoch)
-                # print(fulldir+image_filename)
-                if not os.path.isdir(fulldir):
-                    os.makedirs(fulldir)
-
-                cv2.imwrite(fulldir + image_filename, yHaT[0, 1, :, :])
-            avg_iou = np.mean(iou_list)
-            print("current epoch: {} current mean iou: {:.4f}".format(epoch + 1, avg_iou))
-            writer.add_scalar("val_mean_iou", avg_iou, epoch + 1)
-            fulldir = direc + "/{}/".format(epoch)
-            torch.save(model.state_dict(), fulldir + modelname + ".pth")
-            torch.save(model.state_dict(), direc + "final_model.pth")
+                torch.save(model.state_dict(), fulldir + modelname + ".pth")
+                torch.save(model.state_dict(), direc + "final_model.pth")
+                model.train()
     writer.close()
 
 

@@ -1,11 +1,12 @@
 from utility.rle_tool import *
 from utility.tool import *
 import os
+from config.config import *
 
 
 class TrainImageHandler(object):
     def __init__(self):
-        self.img_dir = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train/"
+        self.img_dir = TRAIN_PATH
         self.dict_imgID_image = {}
         self.get_dict_imgID_image()
 
