@@ -19,6 +19,7 @@ RESULT_DIR = "/content/drive/MyDrive/Project/kaggle_result/"  # On Colab
 
 # MASK_DIR = "/Users/wangyu/Desktop/利兹上课资料/Kaggle比赛/data/train_mask.csv" # Steven Mac
 # TRAIN_CSV = "/Users/wangyu/Desktop/利兹上课资料/Kaggle比赛/data/train.csv" # Steven Mac
+# TRAIN_PATH = "/Users/wangyu/Desktop/利兹上课资料/Kaggle比赛/data/train/" # Steven Mac
 
 # TRAIN_CSV = "D:/Seg-cell/train.csv" # guanhui
 # TRAIN_PATH = "D:/Seg-cell/train" # guanhui

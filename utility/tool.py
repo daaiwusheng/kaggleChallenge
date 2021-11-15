@@ -20,6 +20,7 @@ def show_image(image, window_name='test'):
     if isinstance(image, torch.Tensor):
         image = image.numpy()
 
+    image = image.astype(np.uint8)
     image[image == 1] = 255
     cv2.imshow(window_name, image)
     cv2.waitKey(0)
