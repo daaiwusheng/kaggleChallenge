@@ -10,13 +10,6 @@ column_name_annotation = 'annotation'
 
 class TrainLabelsProcessor(object):
     def __init__(self):
-        #on Mac
-        # self.dir_train_csv = "/Users/wangyu/Desktop/利兹上课资料/Kaggle比赛/data/train.csv"
-        # self.save_mask_dir = "/Users/wangyu/Desktop/利兹上课资料/Kaggle比赛/data/train_mask.csv"
-        # on Linux
-        # self.dir_train_csv = "/home/steven/桌面/kaggle/data/trainlabels/train.csv"
-        # self.save_mask_dir = "/home/steven/桌面/kaggle/data/train_mask.csv"
-        # on Windows
 
         self.dir_train_csv = TRAIN_CSV
         self.save_mask_dir = MASK_DIR
@@ -50,6 +43,7 @@ class TrainLabelsProcessor(object):
             if img_id in self.dict_imgID_rel:
                 rles = self.dict_imgID_rel[img_id]
                 rles = rles + ' ' + rle_code  # note we need a space here
+                self.dict_imgID_rel[img_id] = rles
             else:
                 self.dict_imgID_rel[img_id] = rle_code
         save_dict_as_csv(self.save_mask_dir, self.dict_imgID_rel)

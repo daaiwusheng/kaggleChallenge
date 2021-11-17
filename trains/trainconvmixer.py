@@ -82,7 +82,7 @@ def main():
     args = parser.parse_args()
     gray_ = "yes"
     aug = args.aug
-    direc = RESULT_DIR
+    # direc = RESULT_DIR
 
     if gray_ == "yes":
         from models.utils_gray import JointTransform2D, ImageToImage2D, Image2D
@@ -115,9 +115,10 @@ def main():
                                   weight_decay=1e-5)
     # criterion = LogNLLLoss()
     metric = IoUScore()
-
+    criterion = nn.CrossEntropyLoss()
     writer = SummaryWriter()
-
+    best_metric = -1
+    best_metric_epoch = -1
     val_loss_values = list()
     epoch_loss_values = list()
     iou_list = list()
@@ -159,7 +160,7 @@ def main():
             # y_batch = torch.FloatTensor(y_batch)
             # output = output.float()
             # y_batch = y_batch.float()
-            loss = LogNLLLoss(output, y_batch).float()
+            loss = criterion(output, torch.squeeze(y_batch).long())
             # loss = Variable(loss, requires_grad = True)
 
             # ===================backward====================
@@ -192,9 +193,7 @@ def main():
                     # start = timeit.default_timer()
                     y_out = model(X_batch)
                     iou_score = metric(y_out, y_batch)
-                    y_batch = y_batch.float()
-                    y_out = y_out.float()
-                    val_loss = LogNLLLoss(y_out, y_batch).float()
+                    val_loss = criterion(y_out, torch.squeeze(y_batch).long())
                     iou_list.append(iou_score)
                     val_loss_values.append(val_loss.detach().cpu().numpy())
                     # stop = timeit.default_timer()
@@ -218,20 +217,22 @@ def main():
 
                     # yHaT[yHaT == 1] = 255
                     # yval[yval == 1] = 255
-                    fulldir = direc + "/{}/".format(epoch)
+                    # fulldir = direc + "/{}/".format(epoch)
                     # print(fulldir+image_filename)
-                    if not os.path.isdir(fulldir):
-                        os.makedirs(fulldir)
+                    # if not os.path.isdir(fulldir):
+                    # os.makedirs(fulldir)
 
                     # cv2.imwrite(fulldir + image_filename, yHaT[0, 1, :, :])
                 avg_iou = np.mean(iou_list)
                 avg_val_loss = np.mean(val_loss_values)
-                print("current epoch: {} current mean val loss: {:.6f} current mean iou: {:.6f}".format(epoch + 1, avg_val_loss, avg_iou))
+                if avg_iou > best_metric:
+                    best_metric = avg_iou
+                    best_metric_epoch = epoch + 1
+                    torch.save(model.state_dict(), "best_metric_convmixermodel_segmentation_array.pth")
+                    print("saved new best metric model")
+                print("current epoch: {} current mean val loss: {:.6f} current mean iou: {:.6f} best mean iou: {:.6f} at epoch {}".format(epoch + 1, avg_val_loss, avg_iou, best_metric, best_metric_epoch))
                 writer.add_scalar("val_mean_iou", avg_iou, epoch + 1)
                 logger.info('Epoch:[{}/{}]\t loss={:.6f}\t avg_val_loss={:.6f}\t avg_iou={:.6f}'.format(epoch, epochs, epoch_running_loss, avg_val_loss, avg_iou))
-                fulldir = direc + "/{}/".format(epoch)
-                torch.save(model.state_dict(), fulldir + modelname + ".pth")
-                torch.save(model.state_dict(), direc + "final_model.pth")
                 model.train()
 
     logger.info('finish training!')
