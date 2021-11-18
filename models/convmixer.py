@@ -112,8 +112,8 @@ class ClassificationHead(Module):
         super().__init__()
         # Average Pool
         # self.pool = nn.AdaptiveAvgPool2d((1, 1))
-        self.act = nn.GELU()
         self.convtrans = nn.ConvTranspose2d(d_model, d_model, kernel_size=10, stride=8, padding=1)
+        self.act = nn.GELU()
         self.batchnorm = nn.BatchNorm2d(d_model)
         #这里尽量不要考虑上采用函数，因为这个线性插值的纯粹的数值计算是不能学习的，反卷积可以做到上采样
         # self.upsample = nn.UpsamplingBilinear2d(scale_factor=2)
@@ -127,8 +127,8 @@ class ClassificationHead(Module):
     def forward(self, x: torch.Tensor):
         # Average pooling
         # x = self.pool(x)
-        x = self.act(x)
         x = self.convtrans(x)
+        x = self.act(x)
         x = self.batchnorm(x)
         # x = self.upsample(x)
         # Get the embedding, `x` will have shape `[batch_size, d_model, 1, 1]`
