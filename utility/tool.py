@@ -27,6 +27,11 @@ def show_image(image, window_name='test'):
     cv2.destroyAllWindows()
 
 
+def show_gray_image(image_array, vmin=0, vmax=1):
+    plt.imshow(image_array, cmap='gray', vmin=vmin, vmax=vmax)
+    plt.show()
+
+
 # encoding=utf-8
 def get_cur_info():
     file_name = sys._getframe().f_code.co_filename  # 当前文件名，可以通过__file__获得
@@ -64,3 +69,16 @@ def standardization(data):
     mu = np.mean(data, axis=0)
     sigma = np.std(data, axis=0)
     return (data - mu) / sigma
+
+
+def get_contour_from_mask(mask_array):
+    if torch.is_tensor(mask_array):
+        mask_array = mask_array.numpy()
+    mask_coutour_array = np.array(mask_array)
+    rgb_array = cv2.cvtColor(mask_coutour_array, cv2.COLOR_GRAY2RGB)
+    contours, hierarchy = cv2.findContours(rgb_array, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    cv2.drawContours(rgb_array, contours, -1, (0, 0, 255), 1)
+    gray = cv2.cvtColor(rgb_array, cv2.COLOR_BGR2GRAY)  # 再次转成灰度图,因为要从灰度图转到二值图
+    # 大于2的值都置为255,当预测结果出来的时候同样这样处理,然后进行loss计算
+    ret, binary_contuor_map = cv2.threshold(gray, 2, 255, cv2.THRESH_BINARY)
+    return binary_contuor_map

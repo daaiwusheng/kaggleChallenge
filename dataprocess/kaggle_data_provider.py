@@ -3,6 +3,7 @@ from .train_labels_process import *
 import numpy as np
 from utility.tool import *
 import os
+from .write_patches import KaggleDataSaver
 
 split_factor = 0.6
 
@@ -51,7 +52,7 @@ class KaggleDataProvider(object):
             self.pad_h = self.img_size - m_h
 
     def get_train_val_data(self):
-        i = 0 # for test, then only use one image
+        i = 0  # for test, then only use one image
         for img_id, label in self.dict_imageID_label.items():
             # if i == 10:
             #     break
@@ -94,3 +95,17 @@ class KaggleDataProvider(object):
         self.train_labels = self.labels[:train_length]
         self.validate_images = self.images[train_length:]
         self.validate_labels = self.labels[train_length:]
+
+
+class KaggleDataProviderFromPreparedFiles(object):
+    # 这个类从已经切好的patch 和 mask patch 读取文件名字,
+    # 只存储文件名字,不存储文件内容
+    def __init__(self, image_size=64):
+        self.data_saver = KaggleDataSaver(image_size=image_size)
+        self.train_images = self.data_saver.train_images
+        self.train_labels = self.data_saver.train_labels
+        self.validate_images = self.data_saver.validate_images
+        self.validate_labels = self.data_saver.labels
+
+    # def get_all_images_masks(self):
+
