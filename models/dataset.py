@@ -11,6 +11,7 @@ from utility.rle_tool import *
 from dataprocess.kaggle_data_provider import *
 from torchvision import transforms as T
 from typing import Callable
+from scipy.ndimage import distance_transform_edt
 
 
 ## 输出的shape  img和masks:(1,520,704)  c,h,w
@@ -223,6 +224,7 @@ class KaggleDatasetFromPatchFiles(Dataset):
 
         image = Image.open(image_name).convert("L")
         image_array = np.asarray(image)
+        image_array = normalization(image_array)
 
         mask = Image.open(mask_name).convert("L")
         mask_array = np.asarray(mask)
@@ -233,11 +235,14 @@ class KaggleDatasetFromPatchFiles(Dataset):
 
         # 从mask 中获取 contour
         binary_contuor_map = get_contour_from_mask(mask_array)
+        # 提取distance map
+        distance_map = distance_transform_edt(mask_array)
         image_tensor = self.joint_transform(image_array)
         mask_tensor = self.joint_transform(mask_array)
         binary_contuor_map_tensor = self.joint_transform(binary_contuor_map)
+        distance_map_tensor = self.joint_transform(distance_map)
 
         # mask_tensor = torch.as_tensor(mask_tensor, dtype=torch.uint8)
         # image_tensor = torch.as_tensor(image_tensor, dtype=torch.float)
 
-        return image_tensor, mask_tensor ,binary_contuor_map_tensor
+        return image_tensor, mask_tensor, binary_contuor_map_tensor, distance_map_tensor

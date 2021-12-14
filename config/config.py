@@ -8,6 +8,7 @@
 # TRAIN_PATH = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train/"
 # MASK_DIR = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train_mask.csv"
 # RESULT_DIR = "F:/LeedsDocs/Kaggle/kaggle_result/"  # On Tianyou's pc
+#LOOGER_PATH = 'F:/LeedsDocs/Kaggle/exp.log'
 
 
 # TRAIN_CSV = "/content/drive/MyDrive/Project/sartorius-cell-instance-segmentation/train.csv"
@@ -20,6 +21,7 @@ TRAIN_CSV = "/Users/wangyu/Desktop/利兹上课资料/Kaggle比赛/data/train.cs
 TRAIN_PATH = "/Users/wangyu/Desktop/利兹上课资料/Kaggle比赛/data/train/"  # Steven Mac
 TRAIN_PATCH_IMAGE_SAVE = "/Users/wangyu/Desktop/利兹上课资料/Kaggle比赛/data/train_patch_image"  # Steven Mac
 TRAIN_PATCH_MSAK_SAVE = "/Users/wangyu/Desktop/利兹上课资料/Kaggle比赛/data/train_patch_mask"  # Steven Mac
+LOOGER_PATH = 'F:/LeedsDocs/Kaggle/exp.log'
 
 # TRAIN_CSV = "D:/Seg-cell/train.csv" # guanhui
 # TRAIN_PATH = "D:/Seg-cell/train" # guanhui

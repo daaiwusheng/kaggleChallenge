@@ -80,5 +80,6 @@ def get_contour_from_mask(mask_array):
     cv2.drawContours(rgb_array, contours, -1, (0, 0, 255), 1)
     gray = cv2.cvtColor(rgb_array, cv2.COLOR_BGR2GRAY)  # 再次转成灰度图,因为要从灰度图转到二值图
     # 大于2的值都置为255,当预测结果出来的时候同样这样处理,然后进行loss计算
+    # 这样只会保留边界,其余的都是0
     ret, binary_contuor_map = cv2.threshold(gray, 2, 255, cv2.THRESH_BINARY)
     return binary_contuor_map

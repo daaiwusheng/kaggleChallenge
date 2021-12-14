@@ -32,8 +32,8 @@ class KaggleDataProvider(object):
         self.get_train_val_data()
 
     def calculate_clip_size(self):
-        image_width = 704
-        image_height = 520
+        image_width = WIDTH
+        image_height = HEIGHT
 
         threshold = round(0.5 * self.img_size)
         m_w = image_width % self.img_size
