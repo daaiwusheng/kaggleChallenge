@@ -9,9 +9,6 @@ split_factor = 0.6
 
 class KaggleDataProvider(object):
     def __init__(self, image_size=64):
-        # on Linux
-        # self.save_img_dir = "/home/steven/桌面/kaggle/data/clip_image.csv"
-        # self.save_mask_dir = "/home/steven/桌面/kaggle/data/clip_mask_image.csv"
         self.images = []
         self.labels = []
         self.train_images = []
@@ -56,8 +53,8 @@ class KaggleDataProvider(object):
     def get_train_val_data(self):
         i = 0 # for test, then only use one image
         for img_id, label in self.dict_imageID_label.items():
-            if i == 10:
-                break
+            # if i == 10:
+            #     break
             i += 1
             # first padding
             label_array = np.array(label)

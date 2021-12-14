@@ -10,20 +10,31 @@ from torch.utils.tensorboard import SummaryWriter
 
 from metrics.loss import *
 
+from utility.metriclogger import *
+from tqdm import tqdm
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+    logger = get_logger('F:/LeedsDocs/Kaggle/exp.log')
     # Read annotation
     # df_all = pd.read_csv(TRAIN_CSV)
 
     # train_dataset = CellDataset(TRAIN_PATH, df_all, patch_size=PATCH_SIZE, split='train')
+    # 注：python有bug，pickle一次读进大于4G的数据时，在windows上运行会出现EOFError: Ran out of input的错误，解决方案为要么不读取大于4G的数据，要么workers改为0
     train_dataset = KaggleData(is_train=True)
-    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
+    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
 
     # val_dataset = CellDataset(TRAIN_PATH, df_all, patch_size=PATCH_SIZE, split='val')
-    val_dataset = KaggleData(is_train=False)
-    val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
+    val_dataset = KaggleData(is_train=True)
+    val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
+
+    # df_all = pd.read_csv(TRAIN_CSV)
+    # train_dataset = CellDataset(TRAIN_PATH, df_all, patch_size=PATCH_SIZE, split='train')
+    # train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=2)
+    #
+    # val_dataset = CellDataset(TRAIN_PATH, df_all, patch_size=PATCH_SIZE, split='val')
+    # val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=2)
 
     parser = argparse.ArgumentParser(description='Convmixer')
     parser.add_argument('-j', '--workers', default=1, type=int, metavar='N',
@@ -64,14 +75,14 @@ def main():
     '''
     ##########################################################################
     epochs = 400
-    save_freq = 10
+    save_freq = 1
     learning_rate = 0.001
     modelname = "Convmixer"
 
     args = parser.parse_args()
     gray_ = "yes"
     aug = args.aug
-    direc = RESULT_DIR
+    # direc = RESULT_DIR
 
     if gray_ == "yes":
         from models.utils_gray import JointTransform2D, ImageToImage2D, Image2D
@@ -86,7 +97,7 @@ def main():
         crop = None
 
     # Size of a patch, $p$
-    patch_size: int = 2
+    patch_size: int = 8
     # Number of channels in patch embeddings, $h$
     d_model: int = 256
     # Number of [ConvMixer layers](#ConvMixerLayer) or depth, $d$
@@ -102,14 +113,26 @@ def main():
 
     optimizer = torch.optim.AdamW(list(model.parameters()), lr=learning_rate,
                                   weight_decay=1e-5)
-    criterion = LogNLLLoss()
-
+    # criterion = LogNLLLoss()
+    metric = IoUScore()
+    criterion = nn.CrossEntropyLoss()
     writer = SummaryWriter()
+    best_metric = -1
+    best_metric_epoch = -1
+    val_loss_values = list()
+    epoch_loss_values = list()
+    iou_list = list()
+
+    logger.info('start training!')
     for epoch in range(epochs):
 
         epoch_running_loss = 0
+        print("-" * 10)
+        print(f"epoch {epoch + 1}/{400}")
 
-        for batch_idx, (X_batch, y_batch, *rest) in enumerate(train_loader):
+        step = 0
+        for batch_idx, (X_batch, y_batch) in tqdm(enumerate(train_loader), total =len(train_loader)):
+            step += 1
             X_batch = Variable(X_batch.to(device='cuda'))
             y_batch = Variable(y_batch.to(device='cuda'))
             # print(X_batch)
@@ -118,26 +141,26 @@ def main():
 
             output = model(X_batch)
 
-            tmp2 = y_batch.detach().cpu().numpy()
-            tmp = output.detach().cpu().numpy()
-            tmp[tmp >= 0.5] = 1
-            tmp[tmp < 0.5] = 0
-            tmp2[tmp2 > 0] = 1
-            tmp2[tmp2 <= 0] = 0
-            tmp2 = tmp2.astype(int)
-            tmp = tmp.astype(int)
+            # tmp2 = y_batch.detach().cpu().numpy()
+            # tmp = output.detach().cpu().numpy()
+            # tmp[tmp >= 0.5] = 1
+            # tmp[tmp < 0.5] = 0
+            # tmp2[tmp2 > 0] = 1
+            # tmp2[tmp2 <= 0] = 0
+            # tmp2 = tmp2.astype(int)
+            # tmp = tmp.astype(int)
 
-            yHaT = tmp
-            yval = tmp2
+            # yHaT = tmp
+            # yval = tmp2
 
             # 报错，crossentropy需要float point而不是byte，故强转
             # output = output.detach().cpu().numpy()
             # y_batch = y_batch.detach().cpu().numpy()
             # output = torch.FloatTensor(output)
             # y_batch = torch.FloatTensor(y_batch)
-            output = output.float()
-            y_batch = y_batch.float()
-            loss = criterion(output, y_batch).float()
+            # output = output.float()
+            # y_batch = y_batch.float()
+            loss = criterion(output, torch.squeeze(y_batch).long())
             # loss = Variable(loss, requires_grad = True)
 
             # ===================backward====================
@@ -145,60 +168,76 @@ def main():
             loss.backward()
             optimizer.step()
             epoch_running_loss += loss.item()
-
+            epoch_len = len(train_dataset) // train_loader.batch_size
             # ===================log========================
-            print('epoch [{}/{}], loss:{:.4f}'
-                  .format(epoch, epochs, epoch_running_loss / (batch_idx + 1)))
             writer.add_scalar("train_loss", loss.item())
+        epoch_running_loss /= step
+        epoch_loss_values.append(epoch_running_loss)
+        print(f"epoch {epoch + 1} average loss: {epoch_running_loss:.6f}")
+
         if epoch == 10:
             for param in model.parameters():
                 param.requires_grad = True
         if (epoch % save_freq) == 0:
+            model.eval()
+            with torch.no_grad():
+                for batch_idx, (X_batch, y_batch) in tqdm(enumerate(val_loader), total =len(val_loader)):
+                    # print(batch_idx)
+                    # if isinstance(rest[0][0], str):
+                    #     image_filename = rest[0][0]
+                    # else:
+                    image_filename = '%s.png' % str(batch_idx + 1).zfill(3)
 
-            for batch_idx, (X_batch, y_batch, *rest) in enumerate(val_loader):
-                # print(batch_idx)
-                # if isinstance(rest[0][0], str):
-                #     image_filename = rest[0][0]
-                # else:
-                image_filename = '%s.png' % str(batch_idx + 1).zfill(3)
+                    X_batch = Variable(X_batch.to(device='cuda'))
+                    y_batch = Variable(y_batch.to(device='cuda'))
+                    # start = timeit.default_timer()
+                    y_out = model(X_batch)
+                    iou_score = metric(y_out, y_batch)
+                    val_loss = criterion(y_out, torch.squeeze(y_batch).long())
+                    iou_list.append(iou_score)
+                    val_loss_values.append(val_loss.detach().cpu().numpy())
+                    # stop = timeit.default_timer()
+                    # print('Time: ', stop - start)
+                    # tmp2 = y_batch.detach().cpu().numpy()
+                    # tmp = y_out.detach().cpu().numpy()
+                    # tmp[tmp >= 0.5] = 1
+                    # tmp[tmp < 0.5] = 0
+                    # tmp2[tmp2 > 0] = 1
+                    # tmp2[tmp2 <= 0] = 0
+                    # tmp2 = tmp2.astype(int)
+                    # tmp = tmp.astype(int)
 
-                X_batch = Variable(X_batch.to(device='cuda'))
-                y_batch = Variable(y_batch.to(device='cuda'))
-                # start = timeit.default_timer()
-                y_out = model(X_batch)
-                # iou_score = iou_pytorch(y_out, y_batch)
-                # writer.add_scalar("val_mean_dice", iou_score)
-                # stop = timeit.default_timer()
-                # print('Time: ', stop - start)
-                tmp2 = y_batch.detach().cpu().numpy()
-                tmp = y_out.detach().cpu().numpy()
-                tmp[tmp >= 0.5] = 1
-                tmp[tmp < 0.5] = 0
-                tmp2[tmp2 > 0] = 1
-                tmp2[tmp2 <= 0] = 0
-                tmp2 = tmp2.astype(int)
-                tmp = tmp.astype(int)
+                    # print(np.unique(tmp2))
+                    # yHaT = tmp
+                    # yval = tmp2
 
-                # print(np.unique(tmp2))
-                yHaT = tmp
-                yval = tmp2
+                    epsilon = 1e-20
 
-                epsilon = 1e-20
+                    del X_batch, y_batch, y_out
 
-                del X_batch, y_batch, tmp, tmp2, y_out
+                    # yHaT[yHaT == 1] = 255
+                    # yval[yval == 1] = 255
+                    # fulldir = direc + "/{}/".format(epoch)
+                    # print(fulldir+image_filename)
+                    # if not os.path.isdir(fulldir):
+                    # os.makedirs(fulldir)
 
-                yHaT[yHaT == 1] = 255
-                yval[yval == 1] = 255
-                fulldir = direc + "/{}/".format(epoch)
-                # print(fulldir+image_filename)
-                if not os.path.isdir(fulldir):
-                    os.makedirs(fulldir)
+                    # cv2.imwrite(fulldir + image_filename, yHaT[0, 1, :, :])
+                avg_iou = np.mean(iou_list)
+                avg_val_loss = np.mean(val_loss_values)
+                if avg_iou > best_metric:
+                    best_metric = avg_iou
+                    best_metric_epoch = epoch + 1
+                    torch.save(model.state_dict(), "best_metric_convmixermodel_segmentation_array.pth")
+                    print("saved new best metric model")
+                print("current epoch: {} current mean val loss: {:.6f} current mean iou: {:.6f} best mean iou: {:.6f} at epoch {}".format(epoch + 1, avg_val_loss, avg_iou, best_metric, best_metric_epoch))
+                writer.add_scalar("val_mean_iou", avg_iou, epoch + 1)
+                logger.info('Epoch:[{}/{}]\t loss={:.6f}\t avg_val_loss={:.6f}\t avg_iou={:.6f}'.format(epoch, epochs, epoch_running_loss, avg_val_loss, avg_iou))
+                model.train()
 
-                cv2.imwrite(fulldir + image_filename, yHaT[0, 1, :, :])
-            fulldir = direc + "/{}/".format(epoch)
-            torch.save(model.state_dict(), fulldir + modelname + ".pth")
-            torch.save(model.state_dict(), direc + "final_model.pth")
+    logger.info('finish training!')
     writer.close()
+
 
 
 if __name__ == '__main__':
