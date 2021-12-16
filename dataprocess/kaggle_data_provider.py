@@ -105,7 +105,7 @@ class KaggleDataProviderFromPreparedFiles(object):
         self.train_images = self.data_saver.train_images
         self.train_labels = self.data_saver.train_labels
         self.validate_images = self.data_saver.validate_images
-        self.validate_labels = self.data_saver.labels
+        self.validate_labels = self.data_saver.validate_labels
 
     # def get_all_images_masks(self):
 

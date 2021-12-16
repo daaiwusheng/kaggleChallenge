@@ -118,7 +118,7 @@ class ClassificationHead(Module):
         #这里尽量不要考虑上采用函数，因为这个线性插值的纯粹的数值计算是不能学习的，反卷积可以做到上采样
         # self.upsample = nn.UpsamplingBilinear2d(scale_factor=2)
         #1*1卷积这里，无论前面输出多好channel， 这里直接拿来作为输入就行了
-        self.adjust = nn.Conv2d(d_model, 2, kernel_size=1, stride=1, padding=0)
+        self.adjust = nn.Conv2d(d_model, 3, kernel_size=1, stride=1, padding=0)
         #由于目前用的交叉商函数自带softmax， 所以这里就不需要加入softmax了
         # Linear layer
         # self.linear = nn.Linear(d_model, n_classes)

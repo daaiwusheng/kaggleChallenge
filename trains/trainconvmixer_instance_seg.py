@@ -3,6 +3,7 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from models.dataset import *
 from models.convmixer import *
+from metrics.calculate_loss_ins_seg import *
 import argparse
 from models.utils_gray import *
 from metrics.metrics import *
@@ -17,7 +18,7 @@ from tqdm import tqdm
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    logger = get_logger('F:/LeedsDocs/Kaggle/exp.log')
+    logger = get_logger(LOGER_PATH)
     # 注：python有bug，pickle一次读进大于4G的数据时，在windows上运行会出现EOFError: Ran out of input的错误，解决方案为要么不读取大于4G的数据，要么workers改为0
     train_dataset = KaggleDatasetFromPatchFiles(is_train=True)
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
@@ -99,13 +100,12 @@ def main():
     model = ConvMixer(ConvMixerLayer(d_model, kernel_size), n_layers,
                       PatchEmbeddings(d_model, patch_size, 1),
                       ClassificationHead(d_model)).to(device)
-
+    model.float()
     optimizer = torch.optim.AdamW(list(model.parameters()), lr=learning_rate,
                                   weight_decay=1e-5)
     # criterion = LogNLLLoss()
     metric = IoUScore()
-    criterion = nn.CrossEntropyLoss()
-    mse_loss = nn.MSELoss()
+    criterion = LossCalculator()
     writer = SummaryWriter()
     best_metric = -1
     best_metric_epoch = -1
@@ -121,18 +121,17 @@ def main():
         print(f"epoch {epoch + 1}/{400}")
 
         step = 0
-        for batch_idx, (X_batch, y_batch) in tqdm(enumerate(train_loader), total=len(train_loader)):
+        for batch_idx, (image_tensor, mask_tensor, binary_contuor_map_tensor, distance_map_tensor) in tqdm(
+                enumerate(train_loader), total=len(train_loader)):
             step += 1
-            X_batch = Variable(X_batch.to(device='cuda'))
-            y_batch = Variable(y_batch.to(device='cuda'))
-            # print(X_batch)
-            # print(y_batch)
+            image_tensor = move_to_device(image_tensor)
+            mask_tensor = move_to_device(mask_tensor)
+            binary_contuor_map_tensor = move_to_device(binary_contuor_map_tensor)
+            distance_map_tensor = move_to_device(distance_map_tensor)
             # ===================forward=====================
-
-            output = model(X_batch)
-
-            # 报错，crossentropy需要float point而不是byte，故强转
-            loss = criterion(output, torch.squeeze(y_batch).long())
+            output = model(image_tensor)
+            # 内部的损失函数都已经求了平均值
+            loss = criterion(output, mask_tensor, binary_contuor_map_tensor, distance_map_tensor)
             # ===================backward====================
             optimizer.zero_grad()
             loss.backward()
@@ -151,21 +150,31 @@ def main():
         if (epoch % save_freq) == 0:
             model.eval()
             with torch.no_grad():
-                for batch_idx, (X_batch, y_batch) in tqdm(enumerate(val_loader), total=len(val_loader)):
+                for batch_idx, (image_tensor, mask_tensor, binary_contuor_map_tensor, distance_map_tensor) in tqdm(
+                        enumerate(val_loader), total=len(val_loader)):
                     image_filename = '%s.png' % str(batch_idx + 1).zfill(3)
 
-                    X_batch = Variable(X_batch.to(device='cuda'))
-                    y_batch = Variable(y_batch.to(device='cuda'))
-                    # start = timeit.default_timer()
-                    y_out = model(X_batch)
-                    iou_score = metric(y_out, y_batch)
-                    val_loss = criterion(y_out, torch.squeeze(y_batch).long())
-                    iou_list.append(iou_score)
+                    image_tensor = move_to_device(image_tensor)
+                    mask_tensor = move_to_device(mask_tensor)
+                    binary_contuor_map_tensor = move_to_device(binary_contuor_map_tensor)
+                    distance_map_tensor = move_to_device(distance_map_tensor)
+                    # ===================forward=====================
+                    output = model(image_tensor)
+                    # 内部的损失函数都已经求了平均值
+
+                    output_splited = criterion.splitor(output)
+
+                    # iou_score = metric(output_splited[0], mask_tensor) \
+                                # + metric(output_splited[1], binary_contuor_map_tensor) \
+                                # + metric(output_splited[2], distance_map_tensor)
+                    # iou_score /= 3.0
+                    val_loss = criterion(output, mask_tensor, binary_contuor_map_tensor, distance_map_tensor)
+                    # iou_list.append(iou_score)
                     val_loss_values.append(val_loss.detach().cpu().numpy())
 
                     epsilon = 1e-20
 
-                    del X_batch, y_batch, y_out
+
 
                 avg_iou = np.mean(iou_list)
                 avg_val_loss = np.mean(val_loss_values)

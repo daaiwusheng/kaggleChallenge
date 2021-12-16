@@ -1,16 +1,17 @@
-from .train_image_process import *
-from .train_labels_process import *
+from dataprocess.train_image_process import *
+from dataprocess.train_labels_process import *
 
 from PIL import Image
 import numpy as np
 from utility.tool import *
 import os
-
+import shutil
 split_factor = 0.6
 
 
 class KaggleDataSaver(object):
-    def __init__(self, image_size=64):
+    # if we need regenerate all patches, then assign it to True
+    def __init__(self, image_size=64, regenerate=False):
         self.images = []
         self.labels = []
         self.train_images = []
@@ -35,7 +36,7 @@ class KaggleDataSaver(object):
         self.dir_save_maskes = TRAIN_PATCH_MSAK_SAVE + '_' + str(self.img_size)
         dir_save_maskes_exist_bool = os.path.exists(self.dir_save_maskes)
         valid_files_in_bool = self.test_patches_and_masks_in_dir()
-        if dir_save_patches_exist_bool and dir_save_maskes_exist_bool and valid_files_in_bool:
+        if dir_save_patches_exist_bool and dir_save_maskes_exist_bool and valid_files_in_bool and not regenerate:
             #  get patches and masks path
             self.get_patches_masks_fullpath()
             self.split_train_val_data()
@@ -43,9 +44,11 @@ class KaggleDataSaver(object):
         else:
 
             if dir_save_patches_exist_bool:
-                os.rmdir(self.dir_save_patches)
+                # os.rmdir(self.dir_save_patches)
+                shutil.rmtree(self.dir_save_patches, ignore_errors=True)
             if dir_save_maskes_exist_bool:
-                os.rmdir(self.dir_save_maskes)
+                # os.rmdir(self.dir_save_maskes)
+                shutil.rmtree(self.dir_save_maskes, ignore_errors=True)
             os.mkdir(self.dir_save_patches)
             os.mkdir(self.dir_save_maskes)
             self.calculate_clip_size()
@@ -81,7 +84,6 @@ class KaggleDataSaver(object):
             max_test_number += 1
             # first padding
             label_array = np.array(label)
-
             label_pad = np.pad(label_array, ((0, self.pad_h), (0, self.pad_w)), 'constant', constant_values=(0, 0))
             label = label_pad.tolist()
             image = self.dict_imageID_image[img_id]
@@ -103,8 +105,8 @@ class KaggleDataSaver(object):
                     label = np.array(label, dtype=float)
                     image = np.array(image, dtype=float)
 
-                    image_clip_data = image[start_r:end_r, start_col:end_col]
-                    mask_clip_data = label[start_r:end_r, start_col:end_col]
+                    image_clip_data = image[start_r:end_r, start_col:end_col].copy()
+                    mask_clip_data = label[start_r:end_r, start_col:end_col].copy()
 
                     current_idx = r * self.column + col
                     image_clip = Image.fromarray(image_clip_data)
@@ -157,3 +159,7 @@ class KaggleDataSaver(object):
                 if '.png' in mask_clip_name:
                     image_full_path = os.path.join(self.dir_save_maskes, mask_clip_name)
                     self.labels.append(image_full_path)
+
+
+if __name__ == '__main__':
+    KaggleDataSaver(image_size=64, regenerate=True)

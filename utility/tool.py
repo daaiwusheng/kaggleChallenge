@@ -4,6 +4,17 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from scipy.ndimage import distance_transform_edt
+
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+else:
+    device = torch.device("cpu")
+
+
+def move_to_device(var_tensor):
+    return var_tensor.to(device, non_blocking=True)
+
 
 csv.field_size_limit(sys.maxsize)
 
@@ -74,12 +85,28 @@ def standardization(data):
 def get_contour_from_mask(mask_array):
     if torch.is_tensor(mask_array):
         mask_array = mask_array.numpy()
-    mask_coutour_array = np.array(mask_array)
+    mask_coutour_array = np.array(mask_array, dtype='uint8')
     rgb_array = cv2.cvtColor(mask_coutour_array, cv2.COLOR_GRAY2RGB)
-    contours, hierarchy = cv2.findContours(rgb_array, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv2.findContours(mask_coutour_array, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     cv2.drawContours(rgb_array, contours, -1, (0, 0, 255), 1)
     gray = cv2.cvtColor(rgb_array, cv2.COLOR_BGR2GRAY)  # 再次转成灰度图,因为要从灰度图转到二值图
     # 大于2的值都置为255,当预测结果出来的时候同样这样处理,然后进行loss计算
     # 这样只会保留边界,其余的都是0
     ret, binary_contuor_map = cv2.threshold(gray, 2, 255, cv2.THRESH_BINARY)
     return binary_contuor_map
+
+
+def _edt_binary_mask(mask, resolution, alpha):
+    if (mask == 1).all():  # tanh(5) = 0.99991
+        return np.ones_like(mask).astype(float) * 5
+    return distance_transform_edt(mask, resolution) / alpha
+
+
+def get_distance_edt(binary_mask, alpha_fore: float = 8.0, alpha_back: float = 50.0):
+    fore = (binary_mask != 0).astype(np.uint8)
+    back = (binary_mask == 0).astype(np.uint8)
+    resolution = (1.0, 1.0)
+    fore_edt = _edt_binary_mask(fore, resolution, alpha_fore)
+    back_edt = _edt_binary_mask(back, resolution, alpha_back)
+    distance = fore_edt - back_edt
+    return distance
