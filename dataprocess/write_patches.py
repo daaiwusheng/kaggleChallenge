@@ -79,8 +79,8 @@ class KaggleDataSaver(object):
     def get_train_val_data(self):
         max_test_number = 0  # for test, then only use one image
         for img_id, label in self.dict_imageID_label.items():
-            if max_test_number == 1:
-                break
+            # if max_test_number == 1:
+            #     break
             max_test_number += 1
             # first padding
             label_array = np.array(label)
