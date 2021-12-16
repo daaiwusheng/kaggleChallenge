@@ -11,6 +11,9 @@ from utility.rle_tool import *
 from dataprocess.kaggle_data_provider import *
 from torchvision import transforms as T
 from typing import Callable
+from scipy.ndimage import distance_transform_edt
+
+
 ## 输出的shape  img和masks:(1,520,704)  c,h,w
 
 
@@ -27,6 +30,7 @@ def correct_dims(*images):
         return corr_images[0]
     else:
         return corr_images
+
 
 class CellDataset(Dataset):
     def __init__(self, image_dir, df, split='train', transforms=None, resize=False, patch_size=16):
@@ -152,7 +156,7 @@ class CellDataset(Dataset):
 
 class KaggleData(Dataset):
     def __init__(self, is_train=True, dataset_path: str = None, joint_transform: Callable = None, image_size=64):
-        self.data_provider = KaggleDataProvider(image_size=64)
+        self.data_provider = KaggleDataProvider(image_size=image_size)
         self.images = []
         self.masks = []
         if is_train:
@@ -188,3 +192,61 @@ class KaggleData(Dataset):
         #     image, mask = self.joint_transform(image, mask)
 
         return image, mask
+
+
+class KaggleDatasetFromPatchFiles(Dataset):
+    # 这个类从已经切好的patch 和 mask patch 读取文件,不会一下全部把图片读到内存中
+    def __init__(self, is_train=True, dataset_path: str = None, joint_transform: Callable = None, image_size=64):
+        self.data_provider = KaggleDataProviderFromPreparedFiles(image_size=image_size)
+        self.images = []
+        self.masks = []
+        if is_train:
+            self.images = self.data_provider.train_images
+            self.masks = self.data_provider.train_labels
+        else:
+            self.images = self.data_provider.validate_images
+            self.masks = self.data_provider.validate_labels
+        self.joint_transform = transforms.Compose([
+            transforms.ToTensor()
+        ])
+
+
+    def __len__(self):
+        return len(self.masks)
+
+    def __getitem__(self, idx):
+        image_name = self.images[idx]
+        mask_name = self.masks[idx]
+
+        image = Image.open(image_name).convert("L")
+        image_array = np.asarray(image, dtype=DATA_TYPE_NP)
+        image_array = normalization(image_array)
+
+        mask = Image.open(mask_name).convert("L")
+        mask_array = np.asarray(mask, dtype='uint8')
+
+        mask_array = np.where(mask_array > 0, 1, 0)  # 大于0的地方取0，否则取1. 因为前面的a_mask在一些像素上重叠了，所以需要改成1
+        mask_binary_array = np.array(mask_array, dtype='uint8')  # 这里一定要用np.array， 因为这里需要copy
+
+        image_array, mask_array = correct_dims(image_array, mask_array)
+        # print(image.shape)
+
+        # 从mask 中获取 contour
+        binary_contuor_map = get_contour_from_mask(mask_binary_array)
+        # 提取distance map
+
+        distance_map = get_distance_edt(mask_binary_array)
+        distance_map = np.tanh(distance_map)
+
+        # convert numpy to tensor
+        image_tensor = self.joint_transform(image_array)
+        mask_tensor = self.joint_transform(mask_array)
+        binary_contuor_map_tensor = self.joint_transform(binary_contuor_map)
+        distance_map_tensor = self.joint_transform(distance_map)
+
+
+        # mask_tensor = torch.as_tensor(mask_tensor, dtype=torch.uint8)
+        # image_tensor = torch.as_tensor(image_tensor, dtype=torch.float)
+
+        return image_tensor.float(), mask_tensor.float(), \
+               binary_contuor_map_tensor.float(), distance_map_tensor.float()
