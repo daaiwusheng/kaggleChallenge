@@ -16,7 +16,7 @@ from tqdm import tqdm
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    logger = get_logger('F:/LeedsDocs/Kaggle/exp.log')
+    logger = get_logger(LOGER_PATH)
     # Read annotation
     # df_all = pd.read_csv(TRAIN_CSV)
 
