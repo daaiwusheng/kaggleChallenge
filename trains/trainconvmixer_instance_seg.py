@@ -104,7 +104,7 @@ def main():
     optimizer = torch.optim.AdamW(list(model.parameters()), lr=learning_rate,
                                   weight_decay=1e-5)
     # criterion = LogNLLLoss()
-    metric = IoUScore()
+    metric = InstanceIoUScore()
     criterion = LossCalculator()
     writer = SummaryWriter()
     best_metric = -1
@@ -162,14 +162,14 @@ def main():
                     output = model(image_tensor)
                     # 内部的损失函数都已经求了平均值
 
-                    output_splited = criterion.splitor(output)
-
+                    # output_splited = criterion.splitor(output)
                     # iou_score = metric(output_splited[0], mask_tensor) \
-                                # + metric(output_splited[1], binary_contuor_map_tensor) \
-                                # + metric(output_splited[2], distance_map_tensor)
-                    # iou_score /= 3.0
+                    #             + metric(output_splited[1], binary_contuor_map_tensor) \
+                    #             + metric(output_splited[2], distance_map_tensor)
+                    iou_score = metric(output, mask_tensor, binary_contuor_map_tensor, distance_map_tensor)
+                    iou_score /= 3.0
                     val_loss = criterion(output, mask_tensor, binary_contuor_map_tensor, distance_map_tensor)
-                    # iou_list.append(iou_score)
+                    iou_list.append(iou_score)
                     val_loss_values.append(val_loss.detach().cpu().numpy())
 
                     epsilon = 1e-20

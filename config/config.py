@@ -5,19 +5,21 @@ import numpy as np
 DATA_TYPE_TENSOR = torch.float
 DATA_TYPE_NP = np.float
 
-# TRAIN_CSV = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train.csv"
-# TRAIN_PATH = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train/"
-# # RESULT_DIR = "/databig/kaggle_result"  # on Steven's Linux
-# RESULT_DIR = "F:/LeedsDocs/Kaggle/kaggle_result/"  # On Tianyou's pc
 
 
-# TRAIN_CSV = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train.csv"
-# TRAIN_PATH = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train/"
-# MASK_DIR = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train_mask.csv"
-# RESULT_DIR = "F:/LeedsDocs/Kaggle/kaggle_result/"  # On Tianyou's pc
-#LOGER_PATH = 'F:/LeedsDocs/Kaggle/exp.log'
+TRAIN_CSV = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train.csv"
+TRAIN_PATH = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train/"
+MASK_DIR = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train_mask.csv"
+TRAIN_PATCH_IMAGE_SAVE = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train_patch_image"
+TRAIN_PATCH_MSAK_SAVE = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train_patch_mask"
+LOGER_PATH = 'F:/LeedsDocs/Kaggle/exp.log' # On Tianyou's pc
 
-
+# TRAIN_CSV = "/nobackup/ml20t2w/Data/sartorius-cell-instance-segmentation/train.csv"
+# TRAIN_PATH = "/nobackup/ml20t2w/Data/sartorius-cell-instance-segmentation/train/"
+# MASK_DIR = "/nobackup/ml20t2w/Data/sartorius-cell-instance-segmentation/train_mask.csv"
+# TRAIN_PATCH_IMAGE_SAVE = "/nobackup/ml20t2w/Data/sartorius-cell-instance-segmentation/train_patch_image"
+# TRAIN_PATCH_MSAK_SAVE = "/nobackup/ml20t2w/Data/sartorius-cell-instance-segmentation/train_patch_mask"
+# LOGER_PATH = '/nobackup/ml20t2w/code/trains/log/exp.log' # On HPC
 
 
 # TRAIN_CSV = "/content/drive/MyDrive/Project/sartorius-cell-instance-segmentation/train.csv"
@@ -32,12 +34,12 @@ DATA_TYPE_NP = np.float
 # TRAIN_PATCH_MSAK_SAVE = "/Users/wangyu/Desktop/利兹上课资料/Kaggle比赛/data/train_patch_mask"  # Steven Mac
 # LOGER_PATH = 'F:/LeedsDocs/Kaggle/exp.log'
 
-MASK_DIR = "/home/steven/桌面/kaggle/data/train_mask.csv"  # Steven Linux
-TRAIN_CSV = "/home/steven/桌面/kaggle/data/train.csv"  # Steven Linux
-TRAIN_PATH = "/home/steven/桌面/kaggle/data/train/"  # Steven Linux
-TRAIN_PATCH_IMAGE_SAVE = "/databig/kaggleData/train_patch_image"  # Steven Linux
-TRAIN_PATCH_MSAK_SAVE = "/databig/kaggleData/train_patch_mask"  # Steven Linux
-LOGER_PATH = '/databig/kaggleLog/exp.log'  # Steven Linux
+# MASK_DIR = "/home/steven/桌面/kaggle/data/train_mask.csv"  # Steven Linux
+# TRAIN_CSV = "/home/steven/桌面/kaggle/data/train.csv"  # Steven Linux
+# TRAIN_PATH = "/home/steven/桌面/kaggle/data/train/"  # Steven Linux
+# TRAIN_PATCH_IMAGE_SAVE = "/databig/kaggleData/train_patch_image"  # Steven Linux
+# TRAIN_PATCH_MSAK_SAVE = "/databig/kaggleData/train_patch_mask"  # Steven Linux
+# LOGER_PATH = '/databig/kaggleLog/exp.log'  # Steven Linux
 
 
 # TRAIN_CSV = "D:/Seg-cell/train.csv" # guanhui
