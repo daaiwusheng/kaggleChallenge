@@ -121,17 +121,17 @@ def main():
         print(f"epoch {epoch + 1}/{400}")
 
         step = 0
-        for batch_idx, (image_tensor, mask_tensor, binary_contuor_map_tensor, distance_map_tensor) in tqdm(
+        for batch_idx, (image_tensor, mask_tensor, binary_contour_map_tensor, distance_map_tensor) in tqdm(
                 enumerate(train_loader), total=len(train_loader)):
             step += 1
             image_tensor = move_to_device(image_tensor)
             mask_tensor = move_to_device(mask_tensor)
-            binary_contuor_map_tensor = move_to_device(binary_contuor_map_tensor)
+            binary_contour_map_tensor = move_to_device(binary_contour_map_tensor)
             distance_map_tensor = move_to_device(distance_map_tensor)
             # ===================forward=====================
             output = model(image_tensor)
             # 内部的损失函数都已经求了平均值
-            loss = criterion(output, mask_tensor, binary_contuor_map_tensor, distance_map_tensor)
+            loss = criterion(output, mask_tensor, binary_contour_map_tensor, distance_map_tensor)
             # ===================backward====================
             optimizer.zero_grad()
             loss.backward()
@@ -150,13 +150,13 @@ def main():
         if (epoch % save_freq) == 0:
             model.eval()
             with torch.no_grad():
-                for batch_idx, (image_tensor, mask_tensor, binary_contuor_map_tensor, distance_map_tensor) in tqdm(
+                for batch_idx, (image_tensor, mask_tensor, binary_contour_map_tensor, distance_map_tensor) in tqdm(
                         enumerate(val_loader), total=len(val_loader)):
                     image_filename = '%s.png' % str(batch_idx + 1).zfill(3)
 
                     image_tensor = move_to_device(image_tensor)
                     mask_tensor = move_to_device(mask_tensor)
-                    binary_contuor_map_tensor = move_to_device(binary_contuor_map_tensor)
+                    binary_contour_map_tensor = move_to_device(binary_contour_map_tensor)
                     distance_map_tensor = move_to_device(distance_map_tensor)
                     # ===================forward=====================
                     output = model(image_tensor)
@@ -164,12 +164,12 @@ def main():
 
                     # output_splited = criterion.splitor(output)
                     # iou_score = metric(output_splited[0], mask_tensor) \
-                    #             + metric(output_splited[1], binary_contuor_map_tensor) \
+                    #             + metric(output_splited[1], binary_contour_map_tensor) \
                     #             + metric(output_splited[2], distance_map_tensor)
-                    # iou_score = metric(output, mask_tensor, binary_contuor_map_tensor, distance_map_tensor)
+                    # iou_score = metric(output, mask_tensor, binary_contour_map_tensor, distance_map_tensor)
                     # iou_score /= 3.0
                     mask_iou, contour_iou, distance_iou = metric(output, mask_tensor, binary_contour_map_tensor, distance_map_tensor)
-                    val_loss = criterion(output, mask_tensor, binary_contuor_map_tensor, distance_map_tensor)
+                    val_loss = criterion(output, mask_tensor, binary_contour_map_tensor, distance_map_tensor)
                     # iou_list.append(iou_score)
                     val_loss_values.append(val_loss.detach().cpu().numpy())
 
