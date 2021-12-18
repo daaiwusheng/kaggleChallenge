@@ -166,31 +166,34 @@ def main():
                     # iou_score = metric(output_splited[0], mask_tensor) \
                     #             + metric(output_splited[1], binary_contuor_map_tensor) \
                     #             + metric(output_splited[2], distance_map_tensor)
-                    iou_score = metric(output, mask_tensor, binary_contuor_map_tensor, distance_map_tensor)
-                    iou_score /= 3.0
+                    # iou_score = metric(output, mask_tensor, binary_contuor_map_tensor, distance_map_tensor)
+                    # iou_score /= 3.0
+                    mask_iou, contour_iou, distance_iou = metric(output, mask_tensor, binary_contour_map_tensor, distance_map_tensor)
                     val_loss = criterion(output, mask_tensor, binary_contuor_map_tensor, distance_map_tensor)
-                    iou_list.append(iou_score)
+                    # iou_list.append(iou_score)
                     val_loss_values.append(val_loss.detach().cpu().numpy())
 
                     epsilon = 1e-20
 
 
-
-                avg_iou = np.mean(iou_list)
-                avg_val_loss = np.mean(val_loss_values)
-                if avg_iou > best_metric:
-                    best_metric = avg_iou
-                    best_metric_epoch = epoch + 1
-                    torch.save(model.state_dict(), "best_metric_convmixermodel_segmentation_array.pth")
-                    print("saved new best metric model")
-                print(
-                    "current epoch: {} current mean val loss: {:.6f} current mean iou: {:.6f} best mean iou: {:.6f} at epoch {}".format(
-                        epoch + 1, avg_val_loss, avg_iou, best_metric, best_metric_epoch))
-                writer.add_scalar("val_mean_iou", avg_iou, epoch + 1)
-                logger.info('Epoch:[{}/{}]\t loss={:.6f}\t avg_val_loss={:.6f}\t avg_iou={:.6f}'.format(epoch, epochs,
-                                                                                                        epoch_running_loss,
-                                                                                                        avg_val_loss,
-                                                                                                        avg_iou))
+                print("mask_iou: {:.6f}".format(mask_iou))
+                print("contour_iou: {:.6f}".format(contour_iou))
+                print("distance_iou: {:.6f}".format(distance_iou))
+                # avg_iou = np.mean(iou_list)
+                # avg_val_loss = np.mean(val_loss_values)
+                # if avg_iou > best_metric:
+                #     best_metric = avg_iou
+                #     best_metric_epoch = epoch + 1
+                #     torch.save(model.state_dict(), "best_metric_convmixermodel_segmentation_array.pth")
+                #     print("saved new best metric model")
+                # print(
+                #     "current epoch: {} current mean val loss: {:.6f} current mean iou: {:.6f} best mean iou: {:.6f} at epoch {}".format(
+                #         epoch + 1, avg_val_loss, avg_iou, best_metric, best_metric_epoch))
+                # writer.add_scalar("val_mean_iou", avg_iou, epoch + 1)
+                # logger.info('Epoch:[{}/{}]\t loss={:.6f}\t avg_val_loss={:.6f}\t avg_iou={:.6f}'.format(epoch, epochs,
+                #                                                                                         epoch_running_loss,
+                #                                                                                         avg_val_loss,
+                #                                                                                         avg_iou))
                 model.train()
 
     logger.info('finish training!')

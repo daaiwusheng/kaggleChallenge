@@ -48,11 +48,14 @@ class InstanceIoUScore(nn.Module):
     def forward(self, inputs, mask_tensor, binary_contuor_map_tensor, distance_map_tensor):
         inputs_splited = self.splitor(inputs)
 
-        iou = self.mask_iou(torch.sigmoid(inputs_splited[0]), mask_tensor) \
-              + self.contour_iou(torch.sigmoid(inputs_splited[1]), binary_contuor_map_tensor) \
-              + self.distance_iou(torch.tanh(inputs_splited[2]), distance_map_tensor)
+        #iou = self.mask_iou(torch.sigmoid(inputs_splited[0]), mask_tensor) \
+        #+ self.contour_iou(torch.sigmoid(inputs_splited[1]), binary_contuor_map_tensor) \
+        #+ self.distance_iou(torch.tanh(inputs_splited[2]), distance_map_tensor)
+        mask_iou = self.mask_iou(torch.sigmoid(inputs_splited[0]), mask_tensor)
+        contour_iou = self.contour_iou(torch.sigmoid(inputs_splited[1]), binary_contuor_map_tensor)
+        distance_iou = self.distance_iou(torch.tanh(inputs_splited[2]), distance_map_tensor)
 
-        return iou
+        return mask_iou, contour_iou, distance_iou
 
 
 
