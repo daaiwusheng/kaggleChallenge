@@ -19,6 +19,9 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     logger = get_logger(LOGER_PATH)
+
+
+
     # 注：python有bug，pickle一次读进大于4G的数据时，在windows上运行会出现EOFError: Ran out of input的错误，解决方案为要么不读取大于4G的数据，要么workers改为0
     train_dataset = KaggleDatasetFromPatchFiles(is_train=True)
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
@@ -91,7 +94,7 @@ def main():
     # Number of channels in patch embeddings, $h$
     d_model: int = 256
     # Number of [ConvMixer layers](#ConvMixerLayer) or depth, $d$
-    n_layers: int = 20
+    n_layers: int = 8
     # Kernel size of the depth-wise convolution, $k$
     kernel_size: int = 7
     # Number of classes in the task
