@@ -208,28 +208,21 @@ class KaggleDatasetFromPatchFiles(Dataset):
         else:
             self.images = self.data_provider.validate_images
             self.masks = self.data_provider.validate_labels
-        # self.joint_transform = transforms.Compose([
-        #     transforms.ToTensor(),
-        #     transforms.RandomHorizontalFlip(),
-        #     transforms.RandomVerticalFlip(),
-        #     transforms.RandomRotation(),
-        #     transforms.Pad(padding=100)
-        # ])
+        self.joint_transform = transforms.Compose([
+            transforms.ToTensor(),
+        ])
     def aumgmentation(self, image_array, mask_array, binary_contour_map, distance_map):
         angle = transforms.RandomRotation.get_params([-180, 180])
         image_array = transform.rotate(image_array, angle)
-        mask_array =  transform.rotate(mask_array, angle)
-        binary_contour_map =  transform.rotate(binary_contour_map, angle)
-        distance_map =  transform.rotate(distance_map, angle)
-
-
-        image_array = tf.to_tensor(image_array)
-        mask_array = tf.to_tensor(mask_array)
-        binary_contour_map = tf.to_tensor(binary_contour_map)
-        distance_map = tf.to_tensor(distance_map)
+        mask_array = transform.rotate(mask_array, angle)
+        binary_contour_map = transform.rotate(binary_contour_map, angle)
+        distance_map = transform.rotate(distance_map, angle)
         return image_array, mask_array, binary_contour_map, distance_map
 
-
+    def aumgmentat_data(self, data_array):
+        angle = transforms.RandomRotation.get_params([-180, 180])
+        data_array = transform.rotate(data_array, angle)
+        return data_array
 
     def __len__(self):
         return len(self.masks)
@@ -251,6 +244,10 @@ class KaggleDatasetFromPatchFiles(Dataset):
 
         image_array, mask_array = correct_dims(image_array, mask_array)
         # print(image.shape)
+        # 先增强,但是只增强image 和mask
+        image_array = self.aumgmentat_data(image_array)
+        mask_array = self.aumgmentat_data(mask_array)
+        mask_binary_array = self.aumgmentat_data(mask_binary_array)
 
         # 从mask中获取contour
         binary_contour_map = get_contour_from_mask(mask_binary_array)
@@ -261,18 +258,14 @@ class KaggleDatasetFromPatchFiles(Dataset):
 
         # convert numpy to tensor
 
-        image_tensor, mask_tensor, binary_contour_map_tensor, distance_map_tensor = self.aumgmentation(image_array, mask_array, binary_contour_map, distance_map)
-
-
-        # mask_tensor = self.joint_transform(mask_array)
-        # binary_contuor_map_tensor = self.joint_transform(binary_contuor_map)
-        # distance_map_tensor = self.joint_transform(distance_map)
-
-
-
-        # mask_tensor = torch.as_tensor(mask_tensor, dtype=torch.uint8)
-        # image_tensor = torch.as_tensor(image_tensor, dtype=torch.float)
+        # 上面已经增强,如果开启这一行,那么上面的增强要注掉
+        # image_tensor, mask_tensor, binary_contour_map_tensor, distance_map_tensor = self.aumgmentation(image_array, mask_array, binary_contour_map, distance_map)
+        # 转tensor 统一用下面的转
+        image_tensor = self.joint_transform(image_array)
+        mask_tensor = self.joint_transform(mask_array)
+        binary_contuor_map_tensor = self.joint_transform(binary_contour_map)
+        distance_map_tensor = self.joint_transform(distance_map)
 
         return image_tensor.float(), mask_tensor.float(), \
-               binary_contour_map_tensor.float(), distance_map_tensor.float()
+               binary_contuor_map_tensor.float(), distance_map_tensor.float()
 
