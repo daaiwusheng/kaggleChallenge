@@ -5,7 +5,7 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from models.dataset import *
 from models.convmixer import *
-from metrics.calculate_loss_ins_seg import *
+from metrics.cal_distance_loss import *
 import argparse
 from models.utils_gray import *
 from metrics.metrics import *
@@ -107,7 +107,7 @@ def main():
                                   weight_decay=1e-5)
     # criterion = LogNLLLoss()
     metric = InstanceIoUScore()
-    criterion = LossCalculator()
+    criterion = DistanceLossCalculator()
     writer = SummaryWriter()
     best_metric = -1
     best_metric_epoch = -1
@@ -142,10 +142,10 @@ def main():
             epoch_running_loss += loss.item()
             epoch_len = len(train_dataset) // train_loader.batch_size
             # ===================log========================
-            writer.add_scalar("train_loss", loss.item())
+            writer.add_scalar("train_distance_loss", loss.item())
         epoch_running_loss /= step
         epoch_loss_values.append(epoch_running_loss)
-        print(f"epoch {epoch + 1} average loss: {epoch_running_loss:.6f}")
+        print(f"epoch {epoch + 1} average distance loss: {epoch_running_loss:.6f}")
 
         if epoch == 10:
             for param in model.parameters():
@@ -192,7 +192,7 @@ def main():
                     torch.save(model.state_dict(), "best_metric_convmixermodel_segmentation_array.pth")
                     print("saved new best metric model")
                 print(
-                    "current epoch: {} current mean val loss: {:.6f} current mean iou: {:.6f} best mean iou: {:.6f} at epoch {}".format(
+                    "current epoch: {} current mean val distance loss: {:.6f} current mean iou: {:.6f} best mean iou: {:.6f} at epoch {}".format(
                         epoch + 1, avg_val_loss, avg_iou, best_metric, best_metric_epoch))
                 writer.add_scalar("val_mean_iou", avg_iou, epoch + 1)
                 logger.info('Epoch:[{}/{}]\t loss={:.6f}\t avg_val_loss={:.6f}\t avg_iou={:.6f}'.format(epoch, epochs,
