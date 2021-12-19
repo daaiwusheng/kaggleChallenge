@@ -52,4 +52,6 @@ class LossCalculator(nn.Module):
                       + self.dict_weights[WEIGHT_CONTOUR_KEY] * self.contour_loss(predictions_splited[1], contour_y) \
                       + self.dict_weights[WEIGHT_CONTOUR_ASSISTANT_KEY] * self.contour_loss_assis(torch.sigmoid(predictions_splited[1]), contour_y) \
                       + self.dict_weights[WEIGHT_DISTANCE_KEY] * self.distance_loss(torch.tanh(predictions_splited[2]), distance_y)
-        return loss_result
+
+        distance_loss = self.dict_weights[WEIGHT_DISTANCE_KEY] * self.distance_loss(torch.tanh(predictions_splited[2]), distance_y)
+        return loss_result, distance_loss

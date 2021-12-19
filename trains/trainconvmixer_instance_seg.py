@@ -134,7 +134,7 @@ def main():
             # ===================forward=====================
             output = model(image_tensor)
             # 内部的损失函数都已经求了平均值
-            loss = criterion(output, mask_tensor, binary_contuor_map_tensor, distance_map_tensor)
+            loss, distance_loss = criterion(output, mask_tensor, binary_contuor_map_tensor, distance_map_tensor)
             # ===================backward====================
             optimizer.zero_grad()
             loss.backward()
@@ -146,6 +146,7 @@ def main():
         epoch_running_loss /= step
         epoch_loss_values.append(epoch_running_loss)
         print(f"epoch {epoch + 1} average loss: {epoch_running_loss:.6f}")
+        print(f"epoch {epoch + 1} distance loss: {distance_loss:.6f}")
 
         if epoch == 10:
             for param in model.parameters():
@@ -173,7 +174,7 @@ def main():
                     #iou_score /= 3.0
                     mask_iou, contour_iou, distance_iou = metric(output, mask_tensor, binary_contour_map_tensor, distance_map_tensor)
                     iou_score = mask_iou
-                    val_loss = criterion(output, mask_tensor, binary_contour_map_tensor, distance_map_tensor)
+                    val_loss, val_distance_loss = criterion(output, mask_tensor, binary_contour_map_tensor, distance_map_tensor)
                     iou_list.append(iou_score)
                     val_loss_values.append(val_loss.detach().cpu().numpy())
 
@@ -182,7 +183,7 @@ def main():
 
                 print("mask_iou: {:.6f}".format(mask_iou))
                 print("contour_iou: {:.6f}".format(contour_iou))
-                print("distance_iou: {:.6f}".format(distance_iou))
+                print("val_distance_loss: {:.6f}".format(val_distance_loss))
                 avg_iou = np.mean(iou_list)
                 avg_val_loss = np.mean(val_loss_values)
                 #print("current epoch: {} current mean val loss: {:.6f}".format(epoch + 1, avg_val_loss))
