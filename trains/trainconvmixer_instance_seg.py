@@ -186,6 +186,7 @@ def main():
                 avg_iou = np.mean(iou_list)
                 avg_val_loss = np.mean(val_loss_values)
                 #print("current epoch: {} current mean val loss: {:.6f}".format(epoch + 1, avg_val_loss))
+                print('val_loss: {:.6f}'.format(avg_val_loss))
                 if avg_iou > best_metric:
                     best_metric = avg_iou
                     best_metric_epoch = epoch + 1
