@@ -47,11 +47,11 @@ class LossCalculator(nn.Module):
     def forward(self, predictions, mask_y, contour_y, distance_y):
         predictions_splited = self.splitor(predictions)
 
+        distance_loss = self.dict_weights[WEIGHT_DISTANCE_KEY] * self.distance_loss(torch.tanh(predictions_splited[2]), distance_y)
+
         loss_result = self.dict_weights[WEIGHT_MASK_KEY] * self.mask_loss(predictions_splited[0], mask_y) \
                       + self.dict_weights[WEIGHT_MASK_ASSISTANT_KEY] * self.mask_loss_assis(torch.sigmoid(predictions_splited[0]), mask_y) \
                       + self.dict_weights[WEIGHT_CONTOUR_KEY] * self.contour_loss(predictions_splited[1], contour_y) \
                       + self.dict_weights[WEIGHT_CONTOUR_ASSISTANT_KEY] * self.contour_loss_assis(torch.sigmoid(predictions_splited[1]), contour_y) \
-                      + self.dict_weights[WEIGHT_DISTANCE_KEY] * self.distance_loss(torch.tanh(predictions_splited[2]), distance_y)
-
-        distance_loss = self.dict_weights[WEIGHT_DISTANCE_KEY] * self.distance_loss(torch.tanh(predictions_splited[2]), distance_y)
+                      + distance_loss
         return loss_result, distance_loss

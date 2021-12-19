@@ -120,8 +120,9 @@ def main():
     for epoch in range(epochs):
 
         epoch_running_loss = 0
+        epoch_distance_loss = 0
         print("-" * 10)
-        print(f"epoch {epoch + 1}/{400}")
+        print(f"epoch {epoch + 1}/{epochs}")
 
         step = 0
         for batch_idx, (image_tensor, mask_tensor, binary_contuor_map_tensor, distance_map_tensor) in tqdm(
@@ -140,24 +141,27 @@ def main():
             loss.backward()
             optimizer.step()
             epoch_running_loss += loss.item()
+            epoch_distance_loss += distance_loss.item()
             epoch_len = len(train_dataset) // train_loader.batch_size
             # ===================log========================
             writer.add_scalar("train_loss", loss.item())
         epoch_running_loss /= step
+        epoch_distance_loss /= step
         epoch_loss_values.append(epoch_running_loss)
         print(f"epoch {epoch + 1} average loss: {epoch_running_loss:.6f}")
-        print(f"epoch {epoch + 1} distance loss: {distance_loss:.6f}")
-
+        print(f"distance loss : {epoch_distance_loss:.6f}")
         if epoch == 10:
             for param in model.parameters():
                 param.requires_grad = True
         if (epoch % save_freq) == 0:
             model.eval()
+            val_epoch_distance_loss = 0
+            step_val = 1
             with torch.no_grad():
                 for batch_idx, (image_tensor, mask_tensor, binary_contour_map_tensor, distance_map_tensor) in tqdm(
                         enumerate(val_loader), total=len(val_loader)):
                     image_filename = '%s.png' % str(batch_idx + 1).zfill(3)
-
+                    step_val += 1
                     image_tensor = move_to_device(image_tensor)
                     mask_tensor = move_to_device(mask_tensor)
                     binary_contour_map_tensor = move_to_device(binary_contour_map_tensor)
@@ -165,25 +169,20 @@ def main():
                     # ===================forward=====================
                     output = model(image_tensor)
                     # 内部的损失函数都已经求了平均值
-
-                    # output_splited = criterion.splitor(output)
-                    # iou_score = metric(output_splited[0], mask_tensor) \
-                    #             + metric(output_splited[1], binary_contour_map_tensor) \
-                    #             + metric(output_splited[2], distance_map_tensor)
-                    #iou_score = metric(output, mask_tensor, binary_contour_map_tensor, distance_map_tensor)
-                    #iou_score /= 3.0
                     mask_iou, contour_iou, distance_iou = metric(output, mask_tensor, binary_contour_map_tensor, distance_map_tensor)
                     iou_score = mask_iou
                     val_loss, val_distance_loss = criterion(output, mask_tensor, binary_contour_map_tensor, distance_map_tensor)
                     iou_list.append(iou_score)
                     val_loss_values.append(val_loss.detach().cpu().numpy())
-
+                    val_epoch_distance_loss += val_distance_loss.item()
                     epsilon = 1e-20
 
 
                 print("mask_iou: {:.6f}".format(mask_iou))
                 print("contour_iou: {:.6f}".format(contour_iou))
-                print("val_distance_loss: {:.6f}".format(val_distance_loss))
+                print("distance_iou: {:.6f}".format(distance_iou))
+                val_epoch_distance_loss /= step_val
+                print("val_distance_loss: {:.6f}".format(val_epoch_distance_loss))
                 avg_iou = np.mean(iou_list)
                 avg_val_loss = np.mean(val_loss_values)
                 #print("current epoch: {} current mean val loss: {:.6f}".format(epoch + 1, avg_val_loss))
