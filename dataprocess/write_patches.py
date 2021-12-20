@@ -162,4 +162,4 @@ class KaggleDataSaver(object):
 
 
 if __name__ == '__main__':
-    KaggleDataSaver(image_size=64, regenerate=True)
+    KaggleDataSaver(image_size=280, regenerate=True)

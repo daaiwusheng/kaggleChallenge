@@ -269,3 +269,19 @@ class KaggleDatasetFromPatchFiles(Dataset):
         return image_tensor.float(), mask_tensor.float(), \
                binary_contuor_map_tensor.float(), distance_map_tensor.float()
 
+
+if __name__ == '__main__':
+    train_dataset = KaggleDatasetFromPatchFiles(is_train=True,image_size=280)
+    image = train_dataset[0][0]
+    image = torch.squeeze(image)
+    mask = train_dataset[0][1]
+    mask = torch.squeeze(mask)
+    contour = train_dataset[0][2]
+    print('con max : ', torch.max(contour))
+    contour = torch.squeeze(contour)
+    distance = train_dataset[0][3]
+    distance = torch.squeeze(distance)
+
+    con_np = contour.numpy()
+    print(np.max(con_np))
+    show_gray_image(contour.numpy())
