@@ -220,7 +220,7 @@ class KaggleDatasetFromPatchFiles(Dataset):
         return image_array, mask_array, binary_contour_map, distance_map
 
     def aumgmentat_data(self, data_array,angle):
-        data_array = transform.rotate(data_array, angle)
+        data_array = transform.rotate(data_array, angle, preserve_range=True)
         return data_array
 
     def __len__(self):
@@ -244,7 +244,7 @@ class KaggleDatasetFromPatchFiles(Dataset):
         image_array, mask_array = correct_dims(image_array, mask_array)
         # print(image.shape)
         # 先增强,但是只增强image 和mask
-        angle = transforms.RandomRotation.get_params([-180, 180])
+        angle = transforms.RandomRotation.get_params([-90, 90])
         image_array = self.aumgmentat_data(image_array,angle)
         mask_array = self.aumgmentat_data(mask_array,angle)
         mask_binary_array = self.aumgmentat_data(mask_binary_array,angle)
