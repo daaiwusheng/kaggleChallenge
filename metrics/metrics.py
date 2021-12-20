@@ -52,10 +52,12 @@ class InstanceIoUScore(nn.Module):
         #+ self.contour_iou(torch.sigmoid(inputs_splited[1]), binary_contuor_map_tensor) \
         #+ self.distance_iou(torch.tanh(inputs_splited[2]), distance_map_tensor)
         mask_iou = self.mask_iou(torch.sigmoid(inputs_splited[0]), mask_tensor)
+        mask_th_iou = self.mask_iou(torch.where(torch.sigmoid(inputs_splited[0]) > 0.5, 1, 0), mask_tensor)
         contour_iou = self.contour_iou(torch.sigmoid(inputs_splited[1]), binary_contuor_map_tensor)
+        contour_th_iou = self.mask_iou(torch.where(torch.sigmoid(inputs_splited[1]) > 0.5, 1, 0), mask_tensor)
         distance_iou = self.distance_iou(torch.tanh(inputs_splited[2]), distance_map_tensor)
 
-        return mask_iou, contour_iou, distance_iou
+        return mask_iou, contour_iou, distance_iou, mask_th_iou, contour_th_iou
 
 
 
