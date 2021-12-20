@@ -150,12 +150,19 @@ def main():
         epoch_loss_values.append(epoch_running_loss)
         print(f"epoch {epoch + 1} average loss: {epoch_running_loss:.6f}")
         print(f"distance loss : {epoch_distance_loss:.6f}")
-        if epoch == 10:
-            for param in model.parameters():
-                param.requires_grad = True
+
+
+        # if epoch == 10:
+        #     for param in model.parameters():
+        #         param.requires_grad = True
+
+
         if (epoch % save_freq) == 0:
             model.eval()
             val_epoch_distance_loss = 0
+            contour_iou_sum = 0
+            mask_th_iou_sum = 0
+            contour_th_iou_sum = 0
             step_val = 1
             with torch.no_grad():
                 for batch_idx, (image_tensor, mask_tensor, binary_contour_map_tensor, distance_map_tensor) in tqdm(
@@ -169,21 +176,25 @@ def main():
                     # ===================forward=====================
                     output = model(image_tensor)
                     # 内部的损失函数都已经求了平均值
-                    mask_iou, contour_iou, distance_iou = metric(output, mask_tensor, binary_contour_map_tensor, distance_map_tensor)
+                    mask_iou, contour_iou, distance_iou, mask_th_iou, contour_th_iou = metric(output, mask_tensor, binary_contour_map_tensor, distance_map_tensor)
                     iou_score = mask_iou
+                    contour_iou_sum += contour_iou
+                    mask_th_iou_sum += mask_th_iou
+                    contour_th_iou_sum += contour_th_iou
                     val_loss, val_distance_loss = criterion(output, mask_tensor, binary_contour_map_tensor, distance_map_tensor)
                     iou_list.append(iou_score)
                     val_loss_values.append(val_loss.detach().cpu().numpy())
                     val_epoch_distance_loss += val_distance_loss.item()
                     epsilon = 1e-20
 
-
-                print("mask_iou: {:.6f}".format(mask_iou))
-                print("contour_iou: {:.6f}".format(contour_iou))
+                avg_iou = np.mean(iou_list)
+                print("ave_mask_iou: {:.6f}".format(avg_iou))
+                print("ave_contour_iou: {:.6f}".format(contour_iou_sum/step_val))
+                print("ave_mask_thereshold_iou: {:.6f}".format(mask_th_iou_sum / step_val))
+                print("ave_contour_thereshold_iou: {:.6f}".format(contour_th_iou_sum / step_val))
                 print("distance_iou: {:.6f}".format(distance_iou))
                 val_epoch_distance_loss /= step_val
                 print("val_distance_loss: {:.6f}".format(val_epoch_distance_loss))
-                avg_iou = np.mean(iou_list)
                 avg_val_loss = np.mean(val_loss_values)
                 #print("current epoch: {} current mean val loss: {:.6f}".format(epoch + 1, avg_val_loss))
                 print('val_loss: {:.6f}'.format(avg_val_loss))
