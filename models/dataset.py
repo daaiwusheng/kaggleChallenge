@@ -202,7 +202,8 @@ class KaggleDatasetFromPatchFiles(Dataset):
         self.data_provider = KaggleDataProviderFromPreparedFiles(image_size=image_size)
         self.images = []
         self.masks = []
-        if is_train:
+        self.is_train = is_train
+        if self.is_train:
             self.images = self.data_provider.train_images
             self.masks = self.data_provider.train_labels
         else:
@@ -244,7 +245,11 @@ class KaggleDatasetFromPatchFiles(Dataset):
         image_array, mask_array = correct_dims(image_array, mask_array)
         # print(image.shape)
         # 先增强,但是只增强image 和mask
-        angle = transforms.RandomRotation.get_params([-90, 90])
+        prob = np.random.randint(10)
+        if prob >=7 and self.is_train:
+            angle = transforms.RandomRotation.get_params([-90, 90])
+        else:
+            angle = 0
         image_array = self.aumgmentat_data(image_array,angle)
         mask_array = self.aumgmentat_data(mask_array,angle)
         mask_binary_array = self.aumgmentat_data(mask_binary_array,angle)
