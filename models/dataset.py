@@ -246,7 +246,7 @@ class KaggleDatasetFromPatchFiles(Dataset):
         # print(image.shape)
         # 先增强,但是只增强image 和mask
         prob = np.random.randint(10)
-        if prob >=7 and self.is_train:
+        if prob >= 7 and self.is_train:
             angle = transforms.RandomRotation.get_params([-90, 90])
         else:
             angle = 0

@@ -4,7 +4,7 @@ import torch
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from models.dataset import *
-from models.convmixer import *
+from models.mixermedtnet import *
 from metrics.calculate_loss_ins_seg import *
 import argparse
 from models.utils_gray import *
@@ -93,18 +93,27 @@ def main():
     # Number of channels in patch embeddings, $h$
     d_model: int = 256
     # Number of [ConvMixer layers](#ConvMixerLayer) or depth, $d$
-    n_layers: int = 8
+    n_layers: int = 4
     # Kernel size of the depth-wise convolution, $k$
     kernel_size: int = 7
     # Number of classes in the task
     n_classes: int = 1
+    # conv_depths must have at least 3 members
+    conv_depths = (64, 128, 256, 512, 1024)
+    inchannel = 1
+    # model = ConvMixer(ConvMixerLayer(d_model, kernel_size), n_layers,
+    #                   PatchEmbeddings(d_model, patch_size, 1),
+    #                   ClassificationHead(d_model)).to(device)
 
-    model = ConvMixer(ConvMixerLayer(d_model, kernel_size), n_layers,
-                      PatchEmbeddings(d_model, patch_size, 1),
-                      ClassificationHead(d_model)).to(device)
+    model = ConvUnetMixer(ConvMixerLayer(d_model, kernel_size), n_layers,
+                          PatchEmbeddings(d_model, patch_size, 1),
+                          UNet2D(inchannel, conv_depths),
+                          ClassificationHead(d_model),
+                          Segmentation(64)).to(device)
     model.float()
-    optimizer = torch.optim.AdamW(list(model.parameters()), lr=learning_rate,
-                                  weight_decay=1e-5)
+    # optimizer = torch.optim.AdamW(list(model.parameters()), lr=learning_rate,
+    #                               weight_decay=1e-5)
+    optimizer = torch.optim.SGD(list(model.parameters()), lr=learning_rate, weight_decay=1e-5)
     # criterion = LogNLLLoss()
     metric = InstanceIoUScore()
     criterion = LossCalculator()

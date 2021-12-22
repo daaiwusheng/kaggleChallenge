@@ -7,19 +7,19 @@ DATA_TYPE_NP = np.float
 
 
 
-TRAIN_CSV = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train.csv"
-TRAIN_PATH = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train/"
-MASK_DIR = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train_mask.csv"
-TRAIN_PATCH_IMAGE_SAVE = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train_patch_image"
-TRAIN_PATCH_MSAK_SAVE = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train_patch_mask"
-LOGER_PATH = 'F:/LeedsDocs/Kaggle/exp.log' # On Tianyou's pc
+# TRAIN_CSV = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train.csv"
+# TRAIN_PATH = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train/"
+# MASK_DIR = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train_mask.csv"
+# TRAIN_PATCH_IMAGE_SAVE = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train_patch_image"
+# TRAIN_PATCH_MSAK_SAVE = "F:/LeedsDocs/Kaggle/sartorius-cell-instance-segmentation/train_patch_mask"
+# LOGER_PATH = 'F:/LeedsDocs/Kaggle/exp.log' # On Tianyou's pc
 
-# TRAIN_CSV = "/nobackup/ml20t2w/Data/sartorius-cell-instance-segmentation/train.csv"
-# TRAIN_PATH = "/nobackup/ml20t2w/Data/sartorius-cell-instance-segmentation/train/"
-# MASK_DIR = "/nobackup/ml20t2w/Data/sartorius-cell-instance-segmentation/train_mask.csv"
-# TRAIN_PATCH_IMAGE_SAVE = "/nobackup/ml20t2w/Data/sartorius-cell-instance-segmentation/train_patch_image"
-# TRAIN_PATCH_MSAK_SAVE = "/nobackup/ml20t2w/Data/sartorius-cell-instance-segmentation/train_patch_mask"
-# LOGER_PATH = '/nobackup/ml20t2w/code/trains/log/exp.log' # On HPC
+TRAIN_CSV = "/nobackup/ml20t2w/Data/sartorius-cell-instance-segmentation/train.csv"
+TRAIN_PATH = "/nobackup/ml20t2w/Data/sartorius-cell-instance-segmentation/train/"
+MASK_DIR = "/nobackup/ml20t2w/Data/sartorius-cell-instance-segmentation/train_mask.csv"
+TRAIN_PATCH_IMAGE_SAVE = "/nobackup/ml20t2w/Data/sartorius-cell-instance-segmentation/train_patch_image"
+TRAIN_PATCH_MSAK_SAVE = "/nobackup/ml20t2w/Data/sartorius-cell-instance-segmentation/train_patch_mask"
+LOGER_PATH = '/nobackup/ml20t2w/code/trains/log/exp.log' # On HPC
 
 
 # TRAIN_CSV = "/content/drive/MyDrive/Project/sartorius-cell-instance-segmentation/train.csv"
@@ -56,6 +56,6 @@ LOGER_PATH = 'F:/LeedsDocs/Kaggle/exp.log' # On Tianyou's pc
 WIDTH = 704
 HEIGHT = 520
 
-BATCH_SIZE = 32
+BATCH_SIZE = 8
 
 PATCH_SIZE = 64
