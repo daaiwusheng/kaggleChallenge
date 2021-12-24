@@ -93,7 +93,7 @@ def main():
     # Number of channels in patch embeddings, $h$
     d_model: int = 256
     # Number of [ConvMixer layers](#ConvMixerLayer) or depth, $d$
-    n_layers: int = 4
+    n_layers: int = 2
     # Kernel size of the depth-wise convolution, $k$
     kernel_size: int = 7
     # Number of classes in the task
@@ -111,9 +111,9 @@ def main():
                           ClassificationHead(d_model),
                           Segmentation(64)).to(device)
     model.float()
-    # optimizer = torch.optim.AdamW(list(model.parameters()), lr=learning_rate,
-    #                               weight_decay=1e-5)
-    optimizer = torch.optim.SGD(list(model.parameters()), lr=learning_rate, weight_decay=1e-5)
+    optimizer = torch.optim.AdamW(list(model.parameters()), lr=learning_rate,
+                                  weight_decay=1e-5)
+    # optimizer = torch.optim.SGD(list(model.parameters()), lr=learning_rate, weight_decay=1e-5)
     # criterion = LogNLLLoss()
     metric = InstanceIoUScore()
     criterion = LossCalculator()
