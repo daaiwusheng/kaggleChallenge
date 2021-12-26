@@ -167,8 +167,6 @@ def pad_to_shape(this, shp):
 
 
 
-
-
 class ResUnetPlusPlus(nn.Module):
     def __init__(self, channel, filters=[64, 128, 256, 512, 1024]):
         super(ResUnetPlusPlus, self).__init__()
@@ -246,8 +244,6 @@ class ResUnetPlusPlus(nn.Module):
         # out = self.output_layer(x9)
 
         return out
-
-
 
 
 
